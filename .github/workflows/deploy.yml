@@ -31,7 +31,7 @@ jobs:
     - name: Clean install dependencies
       run: |
         rm -rf node_modules package-lock.json
-        npm install
+        npm install --no-fund --no-audit
 
     - name: Verify react-scripts installation
       run: |
