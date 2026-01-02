@@ -12,16 +12,23 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
 
-    - name: Install dependencies
-      run: npm install
+    - name: Clean install dependencies
+      run: |
+        rm -rf node_modules package-lock.json
+        npm install
+
+    - name: Verify react-scripts installation
+      run: |
+        ls -la node_modules/.bin/react-scripts || echo "react-scripts not found in .bin"
+        npm list react-scripts || echo "react-scripts not in package list"
 
     - name: Run tests
       run: npm test -- --coverage --watchAll=false --passWithNoTests
