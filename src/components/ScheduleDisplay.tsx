@@ -187,7 +187,7 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
       // Clean up
       document.body.removeChild(exportContainer);
     } catch (error) {
-      console.error('Error exporting PDF:', error);
+      // Handle PDF export error silently or show user-friendly message
       alert('Failed to export PDF. Please try again.');
     } finally {
       setIsExporting(false);

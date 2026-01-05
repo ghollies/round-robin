@@ -36,7 +36,7 @@ const ScoreEntryDemo: React.FC = () => {
   );
 
   const handleMatchUpdate = (updatedMatch: Match) => {
-    console.log('Match updated:', updatedMatch);
+    // Handle match update - could save to storage or update state
     setShowScoreEntry(false);
   };
 

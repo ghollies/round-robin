@@ -258,8 +258,8 @@ export class OppositionTracker {
    * Check if the opposition distribution is balanced (each player has played against every other player exactly twice)
    */
   isBalanced(): boolean {
-    for (const [_playerId, playerOppositions] of this.oppositions) {
-      for (const [_opponentId, count] of playerOppositions) {
+    for (const [, playerOppositions] of this.oppositions) {
+      for (const [, count] of playerOppositions) {
         if (count !== 2) {
           return false;
         }

@@ -10,8 +10,6 @@ function App() {
   const handleTournamentCreate = (newTournament: Tournament, participantNames: string[]) => {
     setTournament(newTournament);
     setParticipants(participantNames);
-    console.log('Tournament created:', newTournament);
-    console.log('Participants:', participantNames);
   };
 
   if (tournament) {

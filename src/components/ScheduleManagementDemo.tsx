@@ -60,17 +60,14 @@ const ScheduleManagementDemo: React.FC = () => {
 
   const handleMatchesUpdate = (updatedMatches: Match[]) => {
     setMatches(updatedMatches);
-    console.log('Matches updated:', updatedMatches);
   };
 
   const handleRoundsUpdate = (updatedRounds: Round[]) => {
     setRounds(updatedRounds);
-    console.log('Rounds updated:', updatedRounds);
   };
 
   const handleConflictsDetected = (detectedConflicts: ScheduleConflict[]) => {
     setConflicts(detectedConflicts);
-    console.log('Conflicts detected:', detectedConflicts);
   };
 
   return (

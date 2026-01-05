@@ -1,11 +1,9 @@
-import { Tournament, Participant, Team, Match, Round, AppError } from '../types/tournament';
+import { Tournament, Participant, Team, Match, Round } from '../types/tournament';
 import {
   serializeTournament,
   deserializeTournament,
   serializeMatch,
   deserializeMatch,
-  serializeMatches,
-  deserializeMatches,
   serializeRound,
   deserializeRound,
   serializeArray,
@@ -94,17 +92,7 @@ function loadFromStorage<T>(key: string, deserializer?: (data: string) => T): T 
   }
 }
 
-function removeFromStorage(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch (error) {
-    throw new StorageError(
-      `Failed to remove data from storage: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      'access_denied',
-      error
-    );
-  }
-}
+
 
 // Tournament operations
 export function saveTournament(tournament: Tournament): void {

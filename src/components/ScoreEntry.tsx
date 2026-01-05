@@ -44,7 +44,7 @@ export const ScoreEntry: React.FC<ScoreEntryProps> = ({
         setTeam2Data(t2);
         setParticipants(allParticipants);
       } catch (error) {
-        console.error('Failed to load team data:', error);
+        // Handle team data loading error silently
       }
     };
 
@@ -182,7 +182,7 @@ export const ScoreEntry: React.FC<ScoreEntryProps> = ({
       onMatchUpdate(updatedMatch);
       onClose();
     } catch (error) {
-      console.error('Failed to save match result:', error);
+      // Handle match result save error silently or show user-friendly message
       // You might want to show an error message to the user here
     } finally {
       setIsSubmitting(false);

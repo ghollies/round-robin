@@ -1,6 +1,6 @@
 import { Tournament, Participant, Team, Match, Round } from '../types/tournament';
 import { generateIndividualSignupRoundRobin } from './roundRobinAlgorithm';
-import { createMatch, createTeam } from './index';
+import { createTeam } from './index';
 
 export interface ScheduleSettings {
   startTime: Date;
@@ -97,7 +97,6 @@ export class CourtAssignmentTracker {
 
     // Check if we can fit before the first match
     const firstMatch = courtSchedule[0];
-    const matchEndTime = new Date(firstMatch.getTime() + this.matchDuration * 60000);
     if (new Date(earliestTime.getTime() + this.matchDuration * 60000) <= firstMatch) {
       return earliestTime;
     }

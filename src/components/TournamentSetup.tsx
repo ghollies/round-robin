@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tournament } from '../types/tournament';
-import { validateTournament, validateParticipantCount } from '../utils/validation';
+import { validateParticipantCount } from '../utils/validation';
 import './TournamentSetup.css';
 
 interface TournamentSetupProps {

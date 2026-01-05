@@ -1,4 +1,4 @@
-import { Match, Round, ScheduleChange, ScheduleConflict, Participant } from '../types/tournament';
+import { Match, Round, ScheduleChange, ScheduleConflict } from '../types/tournament';
 import { generateId } from './index';
 
 // Change history management

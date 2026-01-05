@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Match, Round, ScheduleChange, ScheduleConflict, DragDropContext } from '../types/tournament';
+import { Match, Round, ScheduleConflict, DragDropContext } from '../types/tournament';
 import { 
   ScheduleChangeHistory, 
   ConflictDetector, 
@@ -151,41 +151,6 @@ const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
 
     onMatchesUpdate(updatedMatches);
   }, [dragContext, matches, matchDuration, changeHistory, onMatchesUpdate]);
-
-  // Handle drop on time slot
-  const handleTimeSlotDrop = useCallback((e: React.DragEvent, timeSlot: Date, courtNumber: number) => {
-    e.preventDefault();
-    
-    const { draggedMatch } = dragContext;
-    if (!draggedMatch) return;
-
-    // Validate the move
-    const conflicts = ConflictDetector.validateMatchReschedule(
-      draggedMatch,
-      timeSlot,
-      courtNumber,
-      matches
-    );
-
-    if (conflicts.some(c => c.severity === 'error')) {
-      alert('Cannot move match: ' + conflicts.map(c => c.message).join(', '));
-      return;
-    }
-
-    // Perform the move
-    const updatedMatch = ScheduleManipulator.rescheduleMatch(
-      draggedMatch,
-      timeSlot,
-      courtNumber,
-      changeHistory
-    );
-
-    const updatedMatches = matches.map(m => 
-      m.id === updatedMatch.id ? updatedMatch : m
-    );
-
-    onMatchesUpdate(updatedMatches);
-  }, [dragContext, matches, changeHistory, onMatchesUpdate]);
 
   // Handle round swap
   const handleRoundDrop = useCallback((e: React.DragEvent, targetRound: Round) => {
@@ -392,36 +357,7 @@ const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
     );
   };
 
-  // Render round row
-  const renderRoundRow = (round: Round) => {
-    const roundMatches = matches
-      .filter(m => m.roundNumber === round.roundNumber)
-      .sort((a, b) => a.matchNumber - b.matchNumber);
 
-    return (
-      <div
-        key={round.id}
-        className={`round-row ${round.status}`}
-        draggable={round.status !== 'completed'}
-        onDragStart={(e) => handleRoundDragStart(e, round)}
-        onDragEnd={handleRoundDragEnd}
-        onDrop={(e) => handleRoundDrop(e, round)}
-        onDragOver={handleDragOver}
-      >
-        <div className="round-header">
-          <h3>Round {round.roundNumber}</h3>
-          <div className="round-status">{round.status}</div>
-          {round.byeTeamId && (
-            <div className="bye-indicator">Bye: Team {round.byeTeamId}</div>
-          )}
-        </div>
-        
-        <div className="round-matches">
-          {roundMatches.map(renderMatchCard)}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="schedule-management">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tournament, Participant } from '../types/tournament';
+import { Participant } from '../types/tournament';
 import { generateOptimizedSchedule, GeneratedSchedule } from '../utils/scheduleGenerator';
 import { createTournament, createParticipant } from '../utils/index';
 import ScheduleDisplay from './ScheduleDisplay';
