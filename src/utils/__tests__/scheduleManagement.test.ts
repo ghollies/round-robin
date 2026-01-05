@@ -8,7 +8,15 @@ import { Match, Round, ScheduleChange } from '../../types/tournament';
 
 // Mock generateId for consistent testing
 jest.mock('../index', () => ({
-  generateId: jest.fn(() => 'test-id-123')
+  generateId: jest.fn(() => 'test-id-123'),
+  serializeTournament: jest.fn(),
+  deserializeTournament: jest.fn(),
+  serializeMatch: jest.fn(),
+  deserializeMatch: jest.fn(),
+  serializeRound: jest.fn(),
+  deserializeRound: jest.fn(),
+  serializeArray: jest.fn(),
+  deserializeArray: jest.fn()
 }));
 
 describe('ScheduleChangeHistory', () => {
@@ -167,17 +175,17 @@ describe('ConflictDetector', () => {
 
   test('should validate match reschedule', () => {
     const baseTime = new Date('2024-01-01T10:00:00');
-    const newTime = new Date('2024-01-01T10:00:00');
+    const newTime = new Date('2024-01-01T11:00:00'); // Different time, 1 hour later
     
-    const match = createMatch('match-1', 1, baseTime);
+    const match = createMatch('match-1', 1, baseTime, 'team1', 'team2');
     const existingMatches = [
-      createMatch('match-2', 2, newTime) // Different court, same time - should be OK
+      createMatch('match-2', 3, newTime, 'team3', 'team4') // Different court (3), different time, different teams
     ];
 
     const conflicts = ConflictDetector.validateMatchReschedule(
       match,
       newTime,
-      2,
+      2, // Moving to court 2, which is different from existing match on court 3
       existingMatches
     );
 

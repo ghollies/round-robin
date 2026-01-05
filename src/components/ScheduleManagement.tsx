@@ -42,7 +42,7 @@ const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
 
   // Detect conflicts whenever matches or rounds change
   useEffect(() => {
-    const detectedConflicts = ConflictDetector.detectConflicts(matches, rounds);
+    const detectedConflicts = ConflictDetector.detectConflicts(matches, rounds) || [];
     setConflicts(detectedConflicts);
     onConflictsDetected(detectedConflicts);
   }, [matches, rounds, onConflictsDetected]);
