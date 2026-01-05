@@ -1,8 +1,7 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ScoreEntry from '../ScoreEntry';
-import { Match, Tournament, Team, Participant } from '../../types/tournament';
+import { Match, Tournament, Team } from '../../types/tournament';
 import * as storage from '../../utils/storage';
 
 // Mock the storage module
@@ -154,8 +153,8 @@ describe('ScoreEntry Component', () => {
       
       await waitFor(() => {
         expect(screen.getByText('Alice Smith / Bob Johnson')).toBeInTheDocument();
-        expect(screen.getByText('Carol Davis / David Wilson')).toBeInTheDocument();
       });
+      expect(screen.getByText('Carol Davis / David Wilson')).toBeInTheDocument();
     });
 
     it('should display tournament rules', () => {
@@ -207,7 +206,6 @@ describe('ScoreEntry Component', () => {
     });
 
     it('should handle negative input gracefully', async () => {
-      const user = userEvent.setup();
       renderScoreEntry();
       
       const team1Input = screen.getAllByRole('spinbutton')[0];
@@ -251,8 +249,8 @@ describe('ScoreEntry Component', () => {
       
       await waitFor(() => {
         expect(screen.getByText('Winner: Alice Smith / Bob Johnson')).toBeInTheDocument();
-        expect(screen.getByText('Match ended by: Point limit')).toBeInTheDocument();
       });
+      expect(screen.getByText('Match ended by: Point limit')).toBeInTheDocument();
     });
   });
 
@@ -286,8 +284,8 @@ describe('ScoreEntry Component', () => {
       
       await waitFor(() => {
         expect(screen.getByText('Winner: Alice Smith / Bob Johnson')).toBeInTheDocument();
-        expect(screen.getByText('Match ended by: Time limit')).toBeInTheDocument();
       });
+      expect(screen.getByText('Match ended by: Time limit')).toBeInTheDocument();
     });
 
     it('should reject tie scores even with time limit', async () => {
@@ -338,9 +336,9 @@ describe('ScoreEntry Component', () => {
           completedAt: expect.any(Date),
           endReason: 'points'
         });
-        expect(mockOnMatchUpdate).toHaveBeenCalled();
-        expect(mockOnClose).toHaveBeenCalled();
       });
+      expect(mockOnMatchUpdate).toHaveBeenCalled();
+      expect(mockOnClose).toHaveBeenCalled();
     });
 
     it('should disable submit button for invalid scores', async () => {
@@ -379,25 +377,25 @@ describe('ScoreEntry Component', () => {
       await waitFor(() => {
         // Check that saveParticipant was called for all 4 participants
         expect(mockStorage.saveParticipant).toHaveBeenCalledTimes(4);
-        
-        // Verify that participants were updated (we check the calls were made with participant objects)
-        const calls = mockStorage.saveParticipant.mock.calls;
-        const updatedParticipants = calls.map(call => call[0]);
-        
-        // Find the updated participants
-        const updatedPlayer1 = updatedParticipants.find(p => p.id === 'player-1');
-        const updatedPlayer3 = updatedParticipants.find(p => p.id === 'player-3');
-        
-        // Verify winner statistics
-        expect(updatedPlayer1?.statistics.gamesWon).toBe(1);
-        expect(updatedPlayer1?.statistics.totalPointsScored).toBe(11);
-        expect(updatedPlayer1?.statistics.totalPointsAllowed).toBe(9);
-        
-        // Verify loser statistics  
-        expect(updatedPlayer3?.statistics.gamesLost).toBe(1);
-        expect(updatedPlayer3?.statistics.totalPointsScored).toBe(9);
-        expect(updatedPlayer3?.statistics.totalPointsAllowed).toBe(11);
       });
+      
+      // Verify that participants were updated (we check the calls were made with participant objects)
+      const calls = mockStorage.saveParticipant.mock.calls;
+      const updatedParticipants = calls.map(call => call[0]);
+      
+      // Find the updated participants
+      const updatedPlayer1 = updatedParticipants.find(p => p.id === 'player-1');
+      const updatedPlayer3 = updatedParticipants.find(p => p.id === 'player-3');
+      
+      // Verify winner statistics
+      expect(updatedPlayer1?.statistics.gamesWon).toBe(1);
+      expect(updatedPlayer1?.statistics.totalPointsScored).toBe(11);
+      expect(updatedPlayer1?.statistics.totalPointsAllowed).toBe(9);
+      
+      // Verify loser statistics  
+      expect(updatedPlayer3?.statistics.gamesLost).toBe(1);
+      expect(updatedPlayer3?.statistics.totalPointsScored).toBe(9);
+      expect(updatedPlayer3?.statistics.totalPointsAllowed).toBe(11);
     });
   });
 

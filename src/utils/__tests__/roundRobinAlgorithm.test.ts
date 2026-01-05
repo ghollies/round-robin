@@ -248,7 +248,7 @@ describe('IndividualSignupRoundRobin - 6 Players', () => {
   });
 
   test('should ensure each player partners with every other player exactly once', () => {
-    const rounds = algorithm.generateRounds();
+    algorithm.generateRounds();
     const partnershipMatrix = algorithm.getPartnershipMatrix();
     
     // Check that all partnerships are used exactly once
@@ -257,7 +257,7 @@ describe('IndividualSignupRoundRobin - 6 Players', () => {
   });
 
   test('should track partnerships correctly', () => {
-    const rounds = algorithm.generateRounds();
+    algorithm.generateRounds();
     const partnershipMatrix = algorithm.getPartnershipMatrix();
     
     // For now, just verify that partnerships are being tracked

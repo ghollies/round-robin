@@ -211,7 +211,9 @@ describe('ScheduleGenerator', () => {
       const prevMatch = sortedMatches[i - 1];
       const currentMatch = sortedMatches[i];
       
-      if (prevMatch.courtNumber === currentMatch.courtNumber) {
+      // Only check timing for matches on the same court
+      const isOnSameCourt = prevMatch.courtNumber === currentMatch.courtNumber;
+      if (isOnSameCourt) {
         const prevEndTime = new Date(prevMatch.scheduledTime.getTime() + 30 * 60000);
         expect(currentMatch.scheduledTime.getTime()).toBeGreaterThanOrEqual(prevEndTime.getTime());
       }
