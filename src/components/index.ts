@@ -1,2 +1,2 @@
 // Export all components from this file
-export {};
+export { default as TournamentSetup } from './TournamentSetup';

@@ -8,8 +8,11 @@ test('renders pickleball tournament scheduler heading', () => {
   expect(headingElement).toBeInTheDocument();
 });
 
-test('renders welcome message', () => {
+test('renders tournament setup form', () => {
   render(<App />);
-  const welcomeMessage = screen.getByText(/Welcome to the Pickleball Tournament Scheduler/i);
-  expect(welcomeMessage).toBeInTheDocument();
+  const setupHeading = screen.getByRole('heading', { name: /Tournament Setup/i });
+  expect(setupHeading).toBeInTheDocument();
+  
+  const configureText = screen.getByText(/Configure your pickleball tournament parameters/i);
+  expect(configureText).toBeInTheDocument();
 });
