@@ -1,12 +1,99 @@
 import { Participant, Team, Match, Round } from '../types/tournament';
-import { 
-  generateTeamId, 
-  generateMatchId, 
-  generateRoundId, 
-  createTeam, 
-  createMatch, 
-  createRound 
-} from './index';
+
+/**
+ * Generate a unique ID
+ */
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+}
+
+/**
+ * Generate a unique team ID
+ */
+function generateTeamId(): string {
+  return `team-${generateId()}`;
+}
+
+/**
+ * Generate a unique match ID
+ */
+function generateMatchId(): string {
+  return `match-${generateId()}`;
+}
+
+/**
+ * Generate a unique round ID
+ */
+function generateRoundId(): string {
+  return `round-${generateId()}`;
+}
+
+/**
+ * Create a new team
+ */
+function createTeam(
+  tournamentId: string,
+  player1Id: string,
+  player2Id: string,
+  isPermanent: boolean = false
+): Team {
+  return {
+    id: generateTeamId(),
+    tournamentId,
+    player1Id,
+    player2Id,
+    isPermanent
+  };
+}
+
+/**
+ * Create a new match
+ */
+function createMatch(
+  tournamentId: string,
+  roundNumber: number,
+  matchNumber: number,
+  team1Id: string,
+  team2Id: string,
+  courtNumber: number,
+  scheduledTime: Date
+): Match {
+  return {
+    id: generateMatchId(),
+    tournamentId,
+    roundNumber,
+    matchNumber,
+    team1Id,
+    team2Id,
+    courtNumber,
+    scheduledTime,
+    status: 'scheduled'
+  };
+}
+
+/**
+ * Create a new round
+ */
+function createRound(
+  tournamentId: string,
+  roundNumber: number,
+  matches: Match[] = [],
+  byeTeamId?: string
+): Round {
+  const round: Round = {
+    id: generateRoundId(),
+    tournamentId,
+    roundNumber,
+    status: 'pending',
+    matches
+  };
+  
+  if (byeTeamId !== undefined) {
+    round.byeTeamId = byeTeamId;
+  }
+  
+  return round;
+}
 
 /**
  * Partnership matrix to track which players have been partnered together

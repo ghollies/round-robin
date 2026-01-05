@@ -5,7 +5,22 @@ import {
   generateIndividualSignupRoundRobin 
 } from '../roundRobinAlgorithm';
 import { Participant } from '../../types/tournament';
-import { createParticipant } from '../index';
+
+// Helper function to create participants for testing
+function createParticipant(tournamentId: string, name: string): Participant {
+  return {
+    id: `participant-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+    tournamentId,
+    name: name.trim(),
+    statistics: {
+      gamesWon: 0,
+      gamesLost: 0,
+      totalPointsScored: 0,
+      totalPointsAllowed: 0,
+      pointDifferential: 0
+    }
+  };
+}
 
 describe('PartnershipMatrix', () => {
   let matrix: PartnershipMatrix;
