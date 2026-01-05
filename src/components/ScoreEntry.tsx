@@ -192,38 +192,14 @@ export const ScoreEntry: React.FC<ScoreEntryProps> = ({
   const updateParticipantStatistics = async (result: Match['result']) => {
     if (!result || !team1Data || !team2Data) return;
 
-    const { team1Score, team2Score, winnerId } = result;
+    // Use the new standings utility for consistent statistics updates
+    const { updateParticipantStatisticsFromMatch } = await import('../utils/standings');
+    const { loadTeamsByTournament } = await import('../utils/storage');
     
-    // Get all participants involved in this match
-    const team1Player1 = participants.find(p => p.id === team1Data.player1Id);
-    const team1Player2 = participants.find(p => p.id === team1Data.player2Id);
-    const team2Player1 = participants.find(p => p.id === team2Data.player1Id);
-    const team2Player2 = participants.find(p => p.id === team2Data.player2Id);
-
-    const allMatchParticipants = [team1Player1, team1Player2, team2Player1, team2Player2].filter(Boolean) as Participant[];
-
-    // Update statistics for each participant
-    allMatchParticipants.forEach(participant => {
-      const isOnTeam1 = participant.id === team1Data.player1Id || participant.id === team1Data.player2Id;
-      const isWinner = (isOnTeam1 && winnerId === match.team1Id) || (!isOnTeam1 && winnerId === match.team2Id);
-      
-      const pointsScored = isOnTeam1 ? team1Score : team2Score;
-      const pointsAllowed = isOnTeam1 ? team2Score : team1Score;
-      
-      participant.statistics.gamesWon += isWinner ? 1 : 0;
-      participant.statistics.gamesLost += isWinner ? 0 : 1;
-      participant.statistics.totalPointsScored += pointsScored;
-      participant.statistics.totalPointsAllowed += pointsAllowed;
-      participant.statistics.pointDifferential = 
-        participant.statistics.totalPointsScored - participant.statistics.totalPointsAllowed;
-    });
-
-    // Save updated participant statistics
-    // Note: In a real implementation, you might want to batch these updates
-    const { saveParticipant } = await import('../utils/storage');
-    allMatchParticipants.forEach(participant => {
-      saveParticipant(participant);
-    });
+    const teams = loadTeamsByTournament(match.tournamentId);
+    const updatedMatch = { ...match, result, status: 'completed' as const };
+    
+    updateParticipantStatisticsFromMatch(updatedMatch, teams);
   };
 
   const handleScoreChange = (team: 'team1' | 'team2', value: string) => {

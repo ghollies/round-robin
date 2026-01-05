@@ -3,16 +3,23 @@ import userEvent from '@testing-library/user-event';
 import ScoreEntry from '../ScoreEntry';
 import { Match, Tournament, Team } from '../../types/tournament';
 import * as storage from '../../utils/storage';
+import * as standings from '../../utils/standings';
 
 // Mock the storage module
 jest.mock('../../utils/storage', () => ({
   updateMatch: jest.fn(),
   loadTeam: jest.fn(),
   loadParticipantsByTournament: jest.fn(),
-  saveParticipant: jest.fn()
+  loadTeamsByTournament: jest.fn()
+}));
+
+// Mock the standings utilities
+jest.mock('../../utils/standings', () => ({
+  updateParticipantStatisticsFromMatch: jest.fn()
 }));
 
 const mockStorage = storage as jest.Mocked<typeof storage>;
+const mockStandings = standings as jest.Mocked<typeof standings>;
 
 describe('ScoreEntry Component', () => {
   const mockTournament: Tournament = {
@@ -361,6 +368,10 @@ describe('ScoreEntry Component', () => {
 
     it('should update participant statistics correctly', async () => {
       const user = userEvent.setup();
+      
+      // Mock the loadTeamsByTournament to return the teams
+      mockStorage.loadTeamsByTournament.mockReturnValue([mockTeam1, mockTeam2]);
+      
       renderScoreEntry();
       
       const team1Input = screen.getAllByRole('spinbutton')[0];
@@ -375,27 +386,21 @@ describe('ScoreEntry Component', () => {
       await user.click(submitButton);
       
       await waitFor(() => {
-        // Check that saveParticipant was called for all 4 participants
-        expect(mockStorage.saveParticipant).toHaveBeenCalledTimes(4);
+        // Check that updateParticipantStatisticsFromMatch was called with the correct match and teams
+        expect(mockStandings.updateParticipantStatisticsFromMatch).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: 'match-1',
+            status: 'completed',
+            result: expect.objectContaining({
+              team1Score: 11,
+              team2Score: 9,
+              winnerId: 'team-1',
+              endReason: 'points'
+            })
+          }),
+          [mockTeam1, mockTeam2]
+        );
       });
-      
-      // Verify that participants were updated (we check the calls were made with participant objects)
-      const calls = mockStorage.saveParticipant.mock.calls;
-      const updatedParticipants = calls.map(call => call[0]);
-      
-      // Find the updated participants
-      const updatedPlayer1 = updatedParticipants.find(p => p.id === 'player-1');
-      const updatedPlayer3 = updatedParticipants.find(p => p.id === 'player-3');
-      
-      // Verify winner statistics
-      expect(updatedPlayer1?.statistics.gamesWon).toBe(1);
-      expect(updatedPlayer1?.statistics.totalPointsScored).toBe(11);
-      expect(updatedPlayer1?.statistics.totalPointsAllowed).toBe(9);
-      
-      // Verify loser statistics  
-      expect(updatedPlayer3?.statistics.gamesLost).toBe(1);
-      expect(updatedPlayer3?.statistics.totalPointsScored).toBe(9);
-      expect(updatedPlayer3?.statistics.totalPointsAllowed).toBe(11);
     });
   });
 

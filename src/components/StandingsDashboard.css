@@ -1,0 +1,373 @@
+.standings-dashboard {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.standings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.standings-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.standings-title h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.tournament-complete-badge {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+}
+
+.standings-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.last-updated {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.refresh-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.refresh-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.winners-section {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+}
+
+.winners-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.winners-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.winner-card {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.winner-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.winner-stats {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.standings-summary {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.loading-message,
+.no-data-message {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.standings-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 0.9rem;
+}
+
+.standings-table th {
+  background: #34495e;
+  color: white;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.standings-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.standings-table th.sortable:hover {
+  background: #2c3e50;
+}
+
+.standings-table th.active {
+  background: #2980b9;
+}
+
+.standings-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #ecf0f1;
+  text-align: left;
+}
+
+.standings-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.standings-table tbody tr.winner-row {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  font-weight: 500;
+}
+
+.standings-table tbody tr.winner-row:hover {
+  background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+}
+
+.standings-table tbody tr.top-1 {
+  border-left: 4px solid #f39c12;
+}
+
+.standings-table tbody tr.top-2 {
+  border-left: 4px solid #95a5a6;
+}
+
+.standings-table tbody tr.top-3 {
+  border-left: 4px solid #e67e22;
+}
+
+.rank-cell {
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: center;
+  width: 60px;
+}
+
+.rank-number {
+  display: inline-block;
+  min-width: 20px;
+}
+
+.winner-icon {
+  margin-left: 5px;
+  font-size: 1.1rem;
+}
+
+.name-cell {
+  font-weight: 500;
+  color: #2c3e50;
+  min-width: 120px;
+}
+
+.player-name {
+  display: block;
+}
+
+.wins-cell,
+.losses-cell {
+  text-align: center;
+  font-weight: 500;
+  width: 60px;
+}
+
+.wins-cell {
+  color: #27ae60;
+}
+
+.losses-cell {
+  color: #e74c3c;
+}
+
+.percentage-cell {
+  text-align: center;
+  font-weight: 500;
+  width: 80px;
+}
+
+.differential-cell {
+  text-align: center;
+  font-weight: 600;
+  width: 80px;
+}
+
+.differential-cell.positive {
+  color: #27ae60;
+}
+
+.differential-cell.negative {
+  color: #e74c3c;
+}
+
+.differential-cell.neutral {
+  color: #7f8c8d;
+}
+
+.points-cell,
+.average-cell {
+  text-align: center;
+  width: 80px;
+}
+
+.standings-footer {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.standings-legend {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #7f8c8d;
+}
+
+.legend-symbol {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .standings-dashboard {
+    padding: 15px;
+  }
+  
+  .standings-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .standings-controls {
+    justify-content: space-between;
+  }
+  
+  .standings-summary {
+    justify-content: space-around;
+  }
+  
+  .winners-list {
+    flex-direction: column;
+  }
+  
+  .standings-table {
+    font-size: 0.8rem;
+  }
+  
+  .standings-table th,
+  .standings-table td {
+    padding: 8px 4px;
+  }
+  
+  .standings-legend {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .standings-title h2 {
+    font-size: 1.4rem;
+  }
+  
+  .tournament-complete-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+  
+  .standings-table {
+    font-size: 0.75rem;
+  }
+  
+  .standings-table th,
+  .standings-table td {
+    padding: 6px 3px;
+  }
+}
