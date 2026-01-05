@@ -1,4 +1,4 @@
-import { Match, Round, ScheduleChange } from '../../types/tournament';
+import { Match, Round } from '../../types/tournament';
 
 import { 
   ScheduleChangeHistory, 

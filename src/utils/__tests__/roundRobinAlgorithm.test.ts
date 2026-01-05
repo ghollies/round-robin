@@ -300,10 +300,10 @@ describe('IndividualSignupRoundRobin - 5 Players (Odd)', () => {
     
     const validation = algorithm.validateSchedule(rounds);
     if (!validation.isValid) {
-      console.log('Validation errors:', validation.errors);
-      console.log('Partnership matrix complete:', algorithm.getPartnershipMatrix().isComplete());
-      console.log('Used partnerships:', algorithm.getPartnershipMatrix().getUsedPartnerships());
-      console.log('Total partnerships:', algorithm.getPartnershipMatrix().getTotalPartnerships());
+      // Validation errors: validation.errors
+      // Partnership matrix complete: algorithm.getPartnershipMatrix().isComplete()
+      // Used partnerships: algorithm.getPartnershipMatrix().getUsedPartnerships()
+      // Total partnerships: algorithm.getPartnershipMatrix().getTotalPartnerships()
     }
     expect(validation.isValid).toBe(true);
   });

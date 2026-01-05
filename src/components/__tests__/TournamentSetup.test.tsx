@@ -1,8 +1,6 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TournamentSetup from '../TournamentSetup';
-import { Tournament } from '../../types/tournament';
 
 describe('TournamentSetup Component', () => {
   const mockOnTournamentCreate = jest.fn();

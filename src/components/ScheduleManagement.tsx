@@ -73,37 +73,6 @@ const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
     });
   }, []);
 
-  // Handle round drag start
-  const handleRoundDragStart = useCallback((e: React.DragEvent, round: Round) => {
-    // Only allow dragging incomplete rounds
-    if (round.status === 'completed') {
-      e.preventDefault();
-      return;
-    }
-
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', round.id);
-    
-    setDragContext(prev => ({
-      ...prev,
-      draggedRound: round,
-      draggedMatch: null
-    }));
-
-    e.currentTarget.classList.add('dragging');
-  }, []);
-
-  // Handle round drag end
-  const handleRoundDragEnd = useCallback((e: React.DragEvent) => {
-    e.currentTarget.classList.remove('dragging');
-    
-    setDragContext({
-      draggedMatch: null,
-      draggedRound: null,
-      dropTarget: null
-    });
-  }, []);
-
   // Handle drop on court
   const handleCourtDrop = useCallback((e: React.DragEvent, courtNumber: number) => {
     e.preventDefault();
@@ -151,40 +120,6 @@ const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
 
     onMatchesUpdate(updatedMatches);
   }, [dragContext, matches, matchDuration, changeHistory, onMatchesUpdate]);
-
-  // Handle round swap
-  const handleRoundDrop = useCallback((e: React.DragEvent, targetRound: Round) => {
-    e.preventDefault();
-    
-    const { draggedRound } = dragContext;
-    if (!draggedRound || draggedRound.id === targetRound.id) return;
-
-    // Only allow swapping incomplete rounds
-    if (targetRound.status === 'completed') {
-      alert('Cannot swap with completed round');
-      return;
-    }
-
-    try {
-      const { updatedRounds, updatedMatches } = ScheduleManipulator.swapRounds(
-        draggedRound,
-        targetRound,
-        matches,
-        changeHistory
-      );
-
-      // Update all rounds
-      const allUpdatedRounds = rounds.map(round => {
-        const updated = updatedRounds.find(ur => ur.id === round.id);
-        return updated || round;
-      });
-
-      onRoundsUpdate(allUpdatedRounds);
-      onMatchesUpdate(updatedMatches);
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to swap rounds');
-    }
-  }, [dragContext, matches, rounds, changeHistory, onRoundsUpdate, onMatchesUpdate]);
 
   // Handle drag over
   const handleDragOver = useCallback((e: React.DragEvent) => {

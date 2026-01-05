@@ -1,4 +1,4 @@
-import { validateMatchScore, validateWinCondition, ScoreValidationResult } from '../validation';
+import { validateMatchScore, validateWinCondition } from '../validation';
 import { Tournament } from '../../types/tournament';
 
 describe('Score Validation', () => {

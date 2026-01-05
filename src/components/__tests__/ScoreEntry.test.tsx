@@ -60,57 +60,6 @@ describe('ScoreEntry Component', () => {
     isPermanent: false
   };
 
-  const mockParticipants: Participant[] = [
-    {
-      id: 'player-1',
-      tournamentId: 'tournament-1',
-      name: 'Alice Smith',
-      statistics: {
-        gamesWon: 0,
-        gamesLost: 0,
-        totalPointsScored: 0,
-        totalPointsAllowed: 0,
-        pointDifferential: 0
-      }
-    },
-    {
-      id: 'player-2',
-      tournamentId: 'tournament-1',
-      name: 'Bob Johnson',
-      statistics: {
-        gamesWon: 0,
-        gamesLost: 0,
-        totalPointsScored: 0,
-        totalPointsAllowed: 0,
-        pointDifferential: 0
-      }
-    },
-    {
-      id: 'player-3',
-      tournamentId: 'tournament-1',
-      name: 'Carol Davis',
-      statistics: {
-        gamesWon: 0,
-        gamesLost: 0,
-        totalPointsScored: 0,
-        totalPointsAllowed: 0,
-        pointDifferential: 0
-      }
-    },
-    {
-      id: 'player-4',
-      tournamentId: 'tournament-1',
-      name: 'David Wilson',
-      statistics: {
-        gamesWon: 0,
-        gamesLost: 0,
-        totalPointsScored: 0,
-        totalPointsAllowed: 0,
-        pointDifferential: 0
-      }
-    }
-  ];
-
   const mockOnMatchUpdate = jest.fn();
   const mockOnClose = jest.fn();
 

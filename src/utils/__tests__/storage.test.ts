@@ -5,25 +5,16 @@ import {
   deleteTournament,
   saveParticipant,
   loadParticipant,
-  loadParticipants,
   loadParticipantsByTournament,
   deleteParticipant,
   saveTeam,
-  loadTeam,
-  loadTeams,
   loadTeamsByTournament,
-  deleteTeam,
   saveMatch,
   loadMatch,
-  loadMatches,
   loadMatchesByTournament,
   updateMatch,
-  deleteMatch,
   saveRound,
-  loadRound,
-  loadRounds,
   loadRoundsByTournament,
-  deleteRound,
   getStandings,
   exportTournament,
   importTournament,
@@ -42,7 +33,6 @@ import {
   createMatch,
   createRound
 } from '../index';
-import { Tournament, Participant, Team, Match, Round } from '../../types/tournament';
 
 describe('Storage Service', () => {
   let mockGetItem: jest.SpyInstance;

@@ -18,11 +18,9 @@ import {
   validateParticipant,
   validateTeam,
   validateMatch,
-  validateRound,
   validateParticipantCount,
   validateUniqueParticipantNames
 } from '../index';
-import { Tournament, Participant, Team, Match, Round } from '../../types';
 
 describe('ID Generation', () => {
   test('generateId creates unique IDs', () => {
