@@ -52,7 +52,7 @@
   - Create clear match information display (time, court, teams)
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 8. Implement real-time schedule management
+- [x] 8. Implement real-time schedule management
   - Create drag-and-drop match rescheduling interface
   - Add court reassignment with conflict detection
   - Implement round order swapping for incomplete rounds

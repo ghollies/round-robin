@@ -69,3 +69,33 @@ export interface AppError {
   details?: any;
   timestamp: Date;
 }
+
+// Schedule management types
+export interface ScheduleChange {
+  id: string;
+  type: 'match-reschedule' | 'court-reassign' | 'round-swap';
+  timestamp: Date;
+  description: string;
+  oldValue: any;
+  newValue: any;
+  matchId?: string;
+  roundId?: string;
+}
+
+export interface ScheduleConflict {
+  id: string;
+  type: 'court-double-booking' | 'player-overlap' | 'time-conflict';
+  severity: 'error' | 'warning';
+  message: string;
+  affectedMatches: string[];
+  suggestions?: string[];
+}
+
+export interface DragDropContext {
+  draggedMatch: Match | null;
+  draggedRound: Round | null;
+  dropTarget: {
+    type: 'court' | 'time' | 'round';
+    value: any;
+  } | null;
+}
