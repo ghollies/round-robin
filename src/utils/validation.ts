@@ -242,3 +242,139 @@ export function validateUniqueParticipantNames(participants: Participant[]): Val
     errors
   };
 }
+
+// Score validation for match results
+export interface ScoreValidationResult extends ValidationResult {
+  winner?: string | undefined;
+  endReason?: 'points' | 'time' | undefined;
+}
+
+export function validateMatchScore(
+  team1Score: number,
+  team2Score: number,
+  team1Id: string,
+  team2Id: string,
+  tournament: Tournament,
+  endReason: 'points' | 'time' = 'points'
+): ScoreValidationResult {
+  const errors: string[] = [];
+  
+  // Basic validation
+  if (team1Score < 0 || team2Score < 0) {
+    errors.push('Scores cannot be negative');
+  }
+
+  if (!Number.isInteger(team1Score) || !Number.isInteger(team2Score)) {
+    errors.push('Scores must be whole numbers');
+  }
+
+  // If both scores are 0, it's not a valid completed match
+  if (team1Score === 0 && team2Score === 0) {
+    errors.push('At least one team must have scored points');
+  }
+
+  // Determine winner and validate based on tournament rules
+  let winner: string | undefined;
+  let actualEndReason: 'points' | 'time' = endReason;
+
+  if (errors.length === 0) {
+    const { pointLimit, scoringRule } = tournament.settings;
+    
+    if (scoringRule === 'first-to-limit') {
+      // First to reach point limit wins
+      if (team1Score >= pointLimit && team1Score > team2Score) {
+        winner = team1Id;
+        actualEndReason = 'points';
+      } else if (team2Score >= pointLimit && team2Score > team1Score) {
+        winner = team2Id;
+        actualEndReason = 'points';
+      } else if (team1Score >= pointLimit && team2Score >= pointLimit && team1Score === team2Score) {
+        errors.push('Match cannot end in a tie. Please enter different scores or continue play.');
+      } else if (endReason === 'time') {
+        // Time limit reached, higher score wins
+        if (team1Score > team2Score) {
+          winner = team1Id;
+        } else if (team2Score > team1Score) {
+          winner = team2Id;
+        } else {
+          errors.push('Match cannot end in a tie. Please enter different scores or continue play.');
+        }
+      } else {
+        errors.push(`Match has not reached the point limit (${pointLimit}) and time limit was not selected`);
+      }
+    } else if (scoringRule === 'win-by-2') {
+      // Must win by 2 points and reach point limit
+      const scoreDiff = Math.abs(team1Score - team2Score);
+      const maxScore = Math.max(team1Score, team2Score);
+      
+      if (maxScore >= pointLimit && scoreDiff >= 2) {
+        winner = team1Score > team2Score ? team1Id : team2Id;
+        actualEndReason = 'points';
+      } else if (endReason === 'time') {
+        // Time limit reached, higher score wins (even without 2-point margin)
+        if (team1Score > team2Score) {
+          winner = team1Id;
+        } else if (team2Score > team1Score) {
+          winner = team2Id;
+        } else {
+          errors.push('Match cannot end in a tie. Please enter different scores or continue play.');
+        }
+      } else {
+        if (maxScore < pointLimit) {
+          errors.push(`Match has not reached the point limit (${pointLimit})`);
+        } else if (scoreDiff < 2) {
+          errors.push('Match must be won by at least 2 points or select "Time Limit" if time expired');
+        }
+      }
+    }
+  }
+
+  return {
+    isValid: errors.length === 0 && winner !== undefined,
+    errors,
+    winner,
+    endReason: actualEndReason
+  };
+}
+
+// Validate win conditions for a match
+export function validateWinCondition(
+  team1Score: number,
+  team2Score: number,
+  tournament: Tournament,
+  endReason: 'points' | 'time'
+): ValidationResult {
+  const errors: string[] = [];
+  const { pointLimit, scoringRule } = tournament.settings;
+
+  if (endReason === 'points') {
+    if (scoringRule === 'first-to-limit') {
+      const maxScore = Math.max(team1Score, team2Score);
+      if (maxScore < pointLimit) {
+        errors.push(`Point limit of ${pointLimit} has not been reached`);
+      }
+      if (team1Score === team2Score && maxScore >= pointLimit) {
+        errors.push('Match cannot end in a tie when reaching point limit');
+      }
+    } else if (scoringRule === 'win-by-2') {
+      const maxScore = Math.max(team1Score, team2Score);
+      const scoreDiff = Math.abs(team1Score - team2Score);
+      
+      if (maxScore < pointLimit) {
+        errors.push(`Point limit of ${pointLimit} has not been reached`);
+      }
+      if (scoreDiff < 2 && maxScore >= pointLimit) {
+        errors.push('Match must be won by at least 2 points');
+      }
+    }
+  } else if (endReason === 'time') {
+    if (team1Score === team2Score) {
+      errors.push('Match cannot end in a tie even with time limit');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
