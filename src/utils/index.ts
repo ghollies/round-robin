@@ -253,3 +253,6 @@ export * from './storage';
 
 // Re-export round robin algorithm
 export * from './roundRobinAlgorithm';
+
+// Re-export schedule generator
+export * from './scheduleGenerator';

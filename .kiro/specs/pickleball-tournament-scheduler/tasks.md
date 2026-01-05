@@ -38,7 +38,7 @@
   - Write comprehensive unit tests for algorithm correctness
   - _Requirements: 4.2, 4.3, 4.4, 4.5, 3.1, 3.2, 3.4, 3.5_
 
-- [ ] 6. Build schedule generation and optimization
+- [x] 6. Build schedule generation and optimization
   - Implement court assignment and time slot calculation
   - Add rest period management between consecutive matches
   - Create schedule visualization with multiple view options

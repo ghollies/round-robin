@@ -258,8 +258,8 @@ export class OppositionTracker {
    * Check if the opposition distribution is balanced (each player has played against every other player exactly twice)
    */
   isBalanced(): boolean {
-    for (const [playerId, playerOppositions] of this.oppositions) {
-      for (const [opponentId, count] of playerOppositions) {
+    for (const [_playerId, playerOppositions] of this.oppositions) {
+      for (const [_opponentId, count] of playerOppositions) {
         if (count !== 2) {
           return false;
         }
@@ -460,27 +460,6 @@ export class IndividualSignupRoundRobin {
     
     // Rotate other players around the circle
     // Adjust the rotation to account for the bye player being removed
-    for (let i = 1; i < n; i++) {
-      const rotatedPosition = ((i - 1 + roundNumber - 1) % (n - 1)) + 1;
-      rotation[rotatedPosition] = players[i];
-    }
-    
-    return rotation;
-  }
-
-  /**
-   * Create rotation for even number of players
-   */
-  private createRotationForEvenPlayers(roundNumber: number, players: Participant[]): Participant[] {
-    const n = players.length;
-    const rotation: Participant[] = new Array(n);
-    
-    if (n === 0) return rotation;
-    
-    // Player 0 stays fixed at position 0
-    rotation[0] = players[0];
-    
-    // Rotate other players around the circle
     for (let i = 1; i < n; i++) {
       const rotatedPosition = ((i - 1 + roundNumber - 1) % (n - 1)) + 1;
       rotation[rotatedPosition] = players[i];

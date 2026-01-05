@@ -286,7 +286,7 @@ export function updateMatch(matchId: string, result: Match['result']): void {
   
   matches[matchIndex] = {
     ...matches[matchIndex],
-    result,
+    ...(result !== undefined && { result }),
     status: 'completed'
   };
   
@@ -456,7 +456,7 @@ export function importTournament(data: string): string {
 // Data migration utilities
 export function getSchemaVersion(): number {
   const version = loadFromStorage(STORAGE_KEYS.SCHEMA_VERSION);
-  return version || 0;
+  return typeof version === 'number' ? version : 0;
 }
 
 export function setSchemaVersion(version: number): void {

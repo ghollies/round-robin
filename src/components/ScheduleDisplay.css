@@ -1,0 +1,395 @@
+.schedule-display {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.schedule-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.schedule-header h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.schedule-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.schedule-controls {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.view-selector,
+.court-selector,
+.player-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-selector label,
+.court-selector label,
+.player-selector label {
+  font-weight: 600;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.view-selector select,
+.court-selector select,
+.player-selector select {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: white;
+  font-size: 0.875rem;
+  min-width: 150px;
+}
+
+.view-selector select:focus,
+.court-selector select:focus,
+.player-selector select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.schedule-content {
+  margin-bottom: 30px;
+}
+
+.match-group {
+  margin-bottom: 40px;
+}
+
+.group-header {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #007bff;
+}
+
+.matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.match-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.match-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.match-info {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.match-number {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.round-number {
+  font-size: 0.875rem;
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.scheduled {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge.in-progress {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge.completed {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+.match-details {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 0.875rem;
+}
+
+.match-time,
+.match-court {
+  color: #495057;
+}
+
+.match-time strong,
+.match-court strong {
+  color: #2c3e50;
+}
+
+.match-teams {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.team {
+  flex: 1;
+  text-align: center;
+}
+
+.team-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.team-players {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.vs-divider {
+  background: #007bff;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.75rem;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.match-result {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  text-align: center;
+  border-top: 1px solid #e9ecef;
+  margin-top: 15px;
+}
+
+.match-result .score {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.match-result .winner {
+  font-size: 0.875rem;
+  color: #28a745;
+  font-weight: 600;
+}
+
+.no-matches {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+}
+
+.no-matches p {
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+.schedule-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .schedule-display {
+    padding: 15px;
+  }
+  
+  .schedule-stats {
+    gap: 15px;
+  }
+  
+  .stat {
+    min-width: 100px;
+  }
+  
+  .schedule-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .view-selector,
+  .court-selector,
+  .player-selector {
+    justify-content: space-between;
+  }
+  
+  .matches-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .match-teams {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .vs-divider {
+    align-self: center;
+  }
+  
+  .schedule-actions {
+    flex-direction: column;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .schedule-display {
+    max-width: none;
+    padding: 0;
+  }
+  
+  .schedule-controls,
+  .schedule-actions {
+    display: none;
+  }
+  
+  .match-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+    margin-bottom: 10px;
+  }
+  
+  .matches-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .group-header {
+    break-after: avoid;
+  }
+}
