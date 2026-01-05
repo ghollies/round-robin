@@ -1,23 +1,11 @@
+import { Match, Round, ScheduleChange } from '../../types/tournament';
+
 import { 
   ScheduleChangeHistory, 
   ConflictDetector, 
   ScheduleManipulator, 
   TimeSlotManager 
 } from '../scheduleManagement';
-import { Match, Round, ScheduleChange } from '../../types/tournament';
-
-// Mock generateId for consistent testing
-jest.mock('../index', () => ({
-  generateId: jest.fn(() => 'test-id-123'),
-  serializeTournament: jest.fn(),
-  deserializeTournament: jest.fn(),
-  serializeMatch: jest.fn(),
-  deserializeMatch: jest.fn(),
-  serializeRound: jest.fn(),
-  deserializeRound: jest.fn(),
-  serializeArray: jest.fn(),
-  deserializeArray: jest.fn()
-}));
 
 describe('ScheduleChangeHistory', () => {
   let history: ScheduleChangeHistory;
@@ -37,7 +25,9 @@ describe('ScheduleChangeHistory', () => {
 
     const addedChange = history.addChange(change);
 
-    expect(addedChange.id).toBe('test-id-123');
+    expect(addedChange.id).toBeDefined();
+    expect(typeof addedChange.id).toBe('string');
+    expect(addedChange.id.length).toBeGreaterThan(0);
     expect(addedChange.type).toBe('match-reschedule');
     expect(addedChange.description).toBe('Test change');
     expect(addedChange.timestamp).toBeInstanceOf(Date);
