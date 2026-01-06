@@ -154,6 +154,95 @@ describe('IndividualSignupRoundRobin - 6 Players', () => {
   });
 });
 
+describe('IndividualSignupRoundRobin - 9 Players (Odd)', () => {
+  let participants: Participant[];
+  let algorithm: IndividualSignupRoundRobin;
+  const tournamentId = 'test-tournament-9';
+
+  beforeEach(() => {
+    participants = Array.from({ length: 9 }, (_, i) => 
+      createParticipant(tournamentId, `Player${i + 1}`)
+    );
+    algorithm = new IndividualSignupRoundRobin(participants, tournamentId);
+  });
+
+  test('should calculate correct parameters for 9 players', () => {
+    expect(algorithm.getRequiredRounds()).toBe(9); // n = 9 for odd numbers
+    expect(algorithm.getMatchesPerRound()).toBe(2); // floor((9-1)/4) = 2 matches per round (8 active players = 4 partnerships = 2 matches)
+    expect(algorithm.hasByeRounds()).toBe(true); // 9 is odd
+  });
+
+  test('should generate valid schedule with byes for 9 players', () => {
+    const rounds = algorithm.generateRounds();
+    expect(rounds).toHaveLength(9); // Should be 9 rounds for 9 players
+    
+    // Each round should have 2 matches and one bye (8 active players = 4 partnerships = 2 matches)
+    rounds.forEach(round => {
+      expect(round.matches).toHaveLength(2);
+      expect(round.byeTeamId).toBeDefined();
+    });
+    
+    const validation = algorithm.validateSchedule(rounds);
+    if (!validation.isValid) {
+      console.log('Validation errors:', validation.errors);
+    }
+    expect(validation.isValid).toBe(true);
+  });
+
+  test('should ensure all partnerships are used for 9 players', () => {
+    algorithm.generateRounds();
+    
+    // Check that all partnerships are used exactly once
+    const allPartnerships = algorithm.getAllPartnerships();
+    const usedPartnerships = allPartnerships.filter(p => p.used);
+    expect(usedPartnerships.length).toBe(36); // C(9,2) = 36
+  });
+});
+
+describe('IndividualSignupRoundRobin - 13 Players (Odd)', () => {
+  let participants: Participant[];
+  let algorithm: IndividualSignupRoundRobin;
+  const tournamentId = 'test-tournament-13';
+
+  beforeEach(() => {
+    participants = Array.from({ length: 13 }, (_, i) => 
+      createParticipant(tournamentId, `Player${i + 1}`)
+    );
+    algorithm = new IndividualSignupRoundRobin(participants, tournamentId);
+  });
+
+  test('should calculate correct parameters for 13 players', () => {
+    expect(algorithm.getRequiredRounds()).toBe(13); // n = 13 for odd numbers
+    expect(algorithm.getMatchesPerRound()).toBe(3); // floor((13-1)/4) = 3 matches per round (12 active players = 6 partnerships = 3 matches)
+    expect(algorithm.hasByeRounds()).toBe(true); // 13 is odd
+  });
+
+  test('should generate valid schedule with byes for 13 players', () => {
+    const rounds = algorithm.generateRounds();
+    expect(rounds).toHaveLength(13); // Should be 13 rounds for 13 players
+    
+    // Each round should have 3 matches and one bye (12 active players = 6 partnerships = 3 matches)
+    rounds.forEach(round => {
+      expect(round.matches).toHaveLength(3);
+      expect(round.byeTeamId).toBeDefined();
+    });
+    
+    const validation = algorithm.validateSchedule(rounds);
+    if (!validation.isValid) {
+      console.log('Validation errors:', validation.errors);
+    }
+    expect(validation.isValid).toBe(true);
+  });
+
+  test('should ensure all partnerships are used for 13 players', () => {
+    algorithm.generateRounds();
+    
+    // Check that all partnerships are used exactly once
+    const allPartnerships = algorithm.getAllPartnerships();
+    const usedPartnerships = allPartnerships.filter(p => p.used);
+    expect(usedPartnerships.length).toBe(78); // C(13,2) = 78
+  });
+});
 describe('IndividualSignupRoundRobin - 5 Players (Odd)', () => {
   let participants: Participant[];
   let algorithm: IndividualSignupRoundRobin;
