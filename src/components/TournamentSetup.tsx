@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Tournament } from '../types/tournament';
-import { validateParticipantCount } from '../utils/validation';
+import { 
+  validateParticipantCount, 
+  validateTournamentName,
+  validateCourtCount,
+  validateMatchDuration,
+  validatePointLimit,
+  validateParticipantName
+} from '../utils/validation';
+import { LoadingOverlay } from './LoadingState';
+import { usePerfMeasure } from '../utils/performance';
 import './TournamentSetup.css';
 
 interface TournamentSetupProps {
@@ -23,6 +32,9 @@ interface FormErrors {
 }
 
 const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate }) => {
+  // Performance monitoring
+  usePerfMeasure('TournamentSetup');
+
   const [formData, setFormData] = useState<TournamentFormData>({
     name: '',
     mode: 'individual-signup',
@@ -36,9 +48,106 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
 
   const [participants, setParticipants] = useState<string[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [warnings, setWarnings] = useState<FormErrors>({});
   const [showParticipantEntry, setShowParticipantEntry] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Memoized validation functions to avoid recalculation
+  const validateForm = useCallback((): boolean => {
+    const newErrors: FormErrors = {};
+    const newWarnings: FormErrors = {};
+
+    // Enhanced tournament name validation
+    const nameValidation = validateTournamentName(formData.name);
+    if (!nameValidation.isValid && nameValidation.error) {
+      newErrors.name = nameValidation.error;
+    }
+
+    // Enhanced participant count validation
+    const participantValidation = validateParticipantCount(formData.participantCount, formData.mode);
+    if (!participantValidation.isValid) {
+      newErrors.participantCount = participantValidation.errors[0];
+    }
+
+    // Enhanced court count validation
+    const courtValidation = validateCourtCount(formData.courtCount, formData.participantCount);
+    if (!courtValidation.isValid && courtValidation.error) {
+      newErrors.courtCount = courtValidation.error;
+    } else if (courtValidation.warning) {
+      newWarnings.courtCount = courtValidation.warning;
+    }
+
+    // Enhanced match duration validation
+    const durationValidation = validateMatchDuration(formData.matchDuration);
+    if (!durationValidation.isValid && durationValidation.error) {
+      newErrors.matchDuration = durationValidation.error;
+    } else if (durationValidation.warning) {
+      newWarnings.matchDuration = durationValidation.warning;
+    }
+
+    // Enhanced point limit validation
+    const pointValidation = validatePointLimit(formData.pointLimit);
+    if (!pointValidation.isValid && pointValidation.error) {
+      newErrors.pointLimit = pointValidation.error;
+    } else if (pointValidation.warning) {
+      newWarnings.pointLimit = pointValidation.warning;
+    }
+
+    setErrors(newErrors);
+    setWarnings(newWarnings);
+    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const validateParticipants = useCallback((): boolean => {
+    const newErrors: FormErrors = {};
+    const newWarnings: FormErrors = {};
+    const existingNames: string[] = [];
+
+    // Enhanced participant validation
+    participants.forEach((name, index) => {
+      const validation = validateParticipantName(name, existingNames, formData.mode);
+      
+      if (!validation.isValid && validation.error) {
+        newErrors[`participant_${index}`] = validation.error;
+      } else if (validation.warning) {
+        newWarnings[`participant_${index}`] = validation.warning;
+      }
+      
+      // Add to existing names if valid
+      if (validation.isValid && name.trim()) {
+        existingNames.push(name.trim());
+      }
+    });
+
+    // Check for duplicates globally
+    const nameMap = new Map<string, number[]>();
+    participants.forEach((name, index) => {
+      const normalizedName = name.trim().toLowerCase();
+      if (normalizedName) {
+        if (!nameMap.has(normalizedName)) {
+          nameMap.set(normalizedName, []);
+        }
+        nameMap.get(normalizedName)!.push(index);
+      }
+    });
+
+    // Mark duplicates
+    nameMap.forEach((indices, name) => {
+      if (indices.length > 1) {
+        indices.forEach(index => {
+          newErrors[`participant_${index}`] = 'Duplicate name detected';
+        });
+        newErrors.duplicates = 'All participant names must be unique';
+      }
+    });
+
+    setErrors(newErrors);
+    setWarnings(newWarnings);
+    return Object.keys(newErrors).length === 0;
+  }, [participants, formData.mode]);
+
+  // Memoized event handlers
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     
@@ -49,131 +158,126 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
     }));
 
     // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
+    setErrors(prev => {
+      if (prev[name]) {
+        const { [name]: removed, ...rest } = prev;
+        return rest;
+      }
+      return prev;
+    });
+  }, []);
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    // Basic tournament validation
-    if (!formData.name.trim()) {
-      newErrors.name = 'Tournament name is required';
-    }
-
-    // Participant count validation
-    const participantValidation = validateParticipantCount(formData.participantCount, formData.mode);
-    if (!participantValidation.isValid) {
-      newErrors.participantCount = participantValidation.errors[0];
-    }
-
-    // Court count validation
-    if (formData.courtCount < 1 || formData.courtCount > 16) {
-      newErrors.courtCount = 'Number of courts must be between 1 and 16';
-    }
-
-    // Match duration validation
-    if (formData.matchDuration < 15 || formData.matchDuration > 60) {
-      newErrors.matchDuration = 'Match duration must be between 15 and 60 minutes';
-    }
-
-    // Point limit validation
-    if (formData.pointLimit < 1) {
-      newErrors.pointLimit = 'Point limit must be a positive number';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (validateForm()) {
       // Initialize participants array based on count
       const initialParticipants = Array(formData.participantCount).fill('');
       setParticipants(initialParticipants);
       setShowParticipantEntry(true);
     }
-  };
+  }, [validateForm, formData.participantCount]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     setShowParticipantEntry(false);
     setParticipants([]);
-  };
+  }, []);
 
-  const handleParticipantChange = (index: number, value: string) => {
-    const newParticipants = [...participants];
-    newParticipants[index] = value;
-    setParticipants(newParticipants);
-
-    // Clear participant-specific errors
-    if (errors[`participant_${index}`]) {
-      setErrors(prev => ({ ...prev, [`participant_${index}`]: '' }));
-    }
-    if (errors.duplicates) {
-      setErrors(prev => ({ ...prev, duplicates: '' }));
-    }
-  };
-
-  const validateParticipants = (): boolean => {
-    const newErrors: FormErrors = {};
-    const nameMap = new Map<string, number>();
-
-    // Check for empty names and duplicates
-    participants.forEach((name, index) => {
-      if (!name.trim()) {
-        newErrors[`participant_${index}`] = 'Name is required';
-        return;
-      }
-
-      const normalizedName = name.trim().toLowerCase();
-      if (nameMap.has(normalizedName)) {
-        const firstIndex = nameMap.get(normalizedName)!;
-        newErrors[`participant_${firstIndex}`] = 'Duplicate name detected';
-        newErrors[`participant_${index}`] = 'Duplicate name detected';
-        newErrors.duplicates = 'All participant names must be unique';
-      } else {
-        nameMap.set(normalizedName, index);
-      }
+  const handleParticipantChange = useCallback((index: number, value: string) => {
+    setParticipants(prev => {
+      const newParticipants = [...prev];
+      newParticipants[index] = value;
+      return newParticipants;
     });
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    // Clear participant-specific errors
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`participant_${index}`];
+      delete newErrors.duplicates;
+      return newErrors;
+    });
+  }, []);
 
-  const handleCreateTournament = () => {
+  const handleCreateTournament = useCallback(async () => {
     if (validateParticipants()) {
-      const tournament: Tournament = {
-        id: `tournament_${Date.now()}`,
-        name: formData.name,
-        mode: formData.mode,
-        settings: {
-          courtCount: formData.courtCount,
-          matchDuration: formData.matchDuration,
-          pointLimit: formData.pointLimit,
-          scoringRule: formData.scoringRule,
-          timeLimit: formData.timeLimit,
-        },
-        status: 'setup',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      setIsSubmitting(true);
+      try {
+        const tournament: Tournament = {
+          id: `tournament_${Date.now()}`,
+          name: formData.name,
+          mode: formData.mode,
+          settings: {
+            courtCount: formData.courtCount,
+            matchDuration: formData.matchDuration,
+            pointLimit: formData.pointLimit,
+            scoringRule: formData.scoringRule,
+            timeLimit: formData.timeLimit,
+          },
+          status: 'setup',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      onTournamentCreate(tournament, participants.map(name => name.trim()));
+        await onTournamentCreate(tournament, participants.map(name => name.trim()));
+      } catch (error) {
+        // Error handling is done by the parent component
+        console.error('Tournament creation failed:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
-  };
+  }, [validateParticipants, formData, participants, onTournamentCreate]);
+
+  // Memoized help text to avoid recalculation
+  const modeHelpText = useMemo(() => {
+    return formData.mode === 'individual-signup' 
+      ? 'Players sign up individually and are paired with different partners each round'
+      : 'Teams of 2 players sign up together and play as fixed pairs';
+  }, [formData.mode]);
+
+  const scoringHelpText = useMemo(() => {
+    return formData.scoringRule === 'win-by-2' 
+      ? 'Must win by at least 2 points (e.g., 11-9, 12-10, 13-11)'
+      : 'First team to reach point limit wins';
+  }, [formData.scoringRule]);
+
+  const participantEntryTitle = useMemo(() => {
+    return formData.mode === 'pair-signup' ? 'Team' : 'Player';
+  }, [formData.mode]);
+
+  const participantEntryDescription = useMemo(() => {
+    return formData.mode === 'pair-signup' 
+      ? `Enter names for ${formData.participantCount} teams (2 players per team)`
+      : `Enter names for ${formData.participantCount} individual players`;
+  }, [formData.mode, formData.participantCount]);
+
+  // Memoized participant inputs to avoid re-rendering all inputs when one changes
+  const participantInputs = useMemo(() => {
+    return participants.map((name, index) => (
+      <div key={index} className="participant-input-group">
+        <label htmlFor={`participant_${index}`}>
+          {formData.mode === 'pair-signup' ? `Team ${index + 1}` : `Player ${index + 1}`}
+        </label>
+        <input
+          type="text"
+          id={`participant_${index}`}
+          value={name}
+          onChange={(e) => handleParticipantChange(index, e.target.value)}
+          placeholder={formData.mode === 'pair-signup' ? 'Smith/Johnson' : 'Player Name'}
+          className={errors[`participant_${index}`] ? 'error' : ''}
+        />
+        {errors[`participant_${index}`] && (
+          <span className="error-text">{errors[`participant_${index}`]}</span>
+        )}
+      </div>
+    ));
+  }, [participants, formData.mode, errors, handleParticipantChange]);
 
   if (showParticipantEntry) {
     return (
       <div className="tournament-setup">
         <div className="setup-header">
-          <h2>Enter {formData.mode === 'pair-signup' ? 'Team' : 'Player'} Names</h2>
-          <p>
-            {formData.mode === 'pair-signup' 
-              ? `Enter names for ${formData.participantCount} teams (2 players per team)`
-              : `Enter names for ${formData.participantCount} individual players`
-            }
-          </p>
+          <h2>Enter {participantEntryTitle} Names</h2>
+          <p>{participantEntryDescription}</p>
         </div>
 
         <div className="participant-entry">
@@ -184,24 +288,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
           )}
 
           <div className="participants-grid">
-            {participants.map((name, index) => (
-              <div key={index} className="participant-input-group">
-                <label htmlFor={`participant_${index}`}>
-                  {formData.mode === 'pair-signup' ? `Team ${index + 1}` : `Player ${index + 1}`}
-                </label>
-                <input
-                  type="text"
-                  id={`participant_${index}`}
-                  value={name}
-                  onChange={(e) => handleParticipantChange(index, e.target.value)}
-                  placeholder={formData.mode === 'pair-signup' ? 'Smith/Johnson' : 'Player Name'}
-                  className={errors[`participant_${index}`] ? 'error' : ''}
-                />
-                {errors[`participant_${index}`] && (
-                  <span className="error-text">{errors[`participant_${index}`]}</span>
-                )}
-              </div>
-            ))}
+            {participantInputs}
           </div>
 
           <div className="form-actions">
@@ -222,7 +309,8 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
   }
 
   return (
-    <div className="tournament-setup">
+    <LoadingOverlay isLoading={isSubmitting} message="Creating tournament...">
+      <div className="tournament-setup">
       <div className="setup-header">
         <h2>Tournament Setup</h2>
         <p>Configure your pickleball tournament parameters</p>
@@ -258,10 +346,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
               <option value="pair-signup">Pair Signup</option>
             </select>
             <div className="help-text">
-              {formData.mode === 'individual-signup' 
-                ? 'Players sign up individually and are paired with different partners each round'
-                : 'Teams of 2 players sign up together and play as fixed pairs'
-              }
+              {modeHelpText}
             </div>
           </div>
 
@@ -300,6 +385,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
               className={errors.courtCount ? 'error' : ''}
             />
             {errors.courtCount && <span className="error-text">{errors.courtCount}</span>}
+            {warnings.courtCount && <span className="warning-text">{warnings.courtCount}</span>}
             <div className="help-text">Between 1 and 16 courts</div>
           </div>
 
@@ -316,6 +402,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
               className={errors.matchDuration ? 'error' : ''}
             />
             {errors.matchDuration && <span className="error-text">{errors.matchDuration}</span>}
+            {warnings.matchDuration && <span className="warning-text">{warnings.matchDuration}</span>}
             <div className="help-text">Between 15 and 60 minutes</div>
           </div>
 
@@ -350,6 +437,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
               className={errors.pointLimit ? 'error' : ''}
             />
             {errors.pointLimit && <span className="error-text">{errors.pointLimit}</span>}
+            {warnings.pointLimit && <span className="warning-text">{warnings.pointLimit}</span>}
             <div className="help-text">Points needed to win a game (e.g., 11, 15, 21)</div>
           </div>
 
@@ -365,10 +453,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
               <option value="first-to-limit">First to Point Limit</option>
             </select>
             <div className="help-text">
-              {formData.scoringRule === 'win-by-2' 
-                ? 'Must win by at least 2 points (e.g., 11-9, 12-10, 13-11)'
-                : 'First team to reach point limit wins'
-              }
+              {scoringHelpText}
             </div>
           </div>
         </div>
@@ -379,7 +464,8 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
           </button>
         </div>
       </form>
-    </div>
+      </div>
+    </LoadingOverlay>
   );
 };
 

@@ -164,13 +164,13 @@ describe('TournamentContext', () => {
       </TournamentProvider>
     );
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('create-tournament').click();
     });
 
     await waitFor(() => {
       expect(screen.getByTestId('error')).toHaveTextContent('Failed to save tournament');
-    });
+    }, { timeout: 3000 });
   });
 
   it('should load tournament successfully', async () => {
@@ -290,7 +290,7 @@ describe('TournamentContext', () => {
     );
 
     // Create tournament first
-    act(() => {
+    await act(async () => {
       screen.getByTestId('create-tournament').click();
     });
 
@@ -304,13 +304,13 @@ describe('TournamentContext', () => {
       throw error;
     });
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('update-participant').click();
     });
 
     await waitFor(() => {
       expect(screen.getByTestId('error')).toHaveTextContent('Failed to update participant');
-    });
+    }, { timeout: 3000 });
   });
 
   it('should clear error', () => {

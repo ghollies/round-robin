@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import { Tournament, Participant, Team, Match, Round, AppError } from '../types/tournament';
+import { performanceMonitor } from '../utils/performance';
 import * as storage from '../utils/storage';
 
 // State interface
@@ -34,7 +35,7 @@ export type TournamentAction =
   | { type: 'RESET_STATE' };
 
 // Initial state
-const initialState: TournamentState = {
+export const initialState: TournamentState = {
   currentTournament: null,
   participants: [],
   teams: [],
@@ -47,7 +48,7 @@ const initialState: TournamentState = {
 };
 
 // Reducer
-function tournamentReducer(state: TournamentState, action: TournamentAction): TournamentState {
+export function tournamentReducer(state: TournamentState, action: TournamentAction): TournamentState {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
@@ -206,90 +207,96 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
 
   // Tournament operations
   const loadTournament = useCallback(async (id: string) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
-    
-    try {
-      const tournament = storage.loadTournament(id);
-      if (!tournament) {
-        throw new Error(`Tournament with id ${id} not found`);
+    return performanceMonitor.measureAsync('load-tournament', async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      try {
+        const tournament = storage.loadTournament(id);
+        if (!tournament) {
+          throw new Error(`Tournament with id ${id} not found`);
+        }
+        
+        const participants = storage.loadParticipantsByTournament(id);
+        const teams = storage.loadTeamsByTournament(id);
+        const matches = storage.loadMatchesByTournament(id);
+        const rounds = storage.loadRoundsByTournament(id);
+        const standings = storage.getStandings(id);
+        
+        dispatch({ type: 'SET_TOURNAMENT', payload: tournament });
+        dispatch({ type: 'SET_PARTICIPANTS', payload: participants });
+        dispatch({ type: 'SET_TEAMS', payload: teams });
+        dispatch({ type: 'SET_MATCHES', payload: matches });
+        dispatch({ type: 'SET_ROUNDS', payload: rounds });
+        dispatch({ type: 'SET_STANDINGS', payload: standings });
+      } catch (error) {
+        handleError(error, 'storage');
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
-      
-      const participants = storage.loadParticipantsByTournament(id);
-      const teams = storage.loadTeamsByTournament(id);
-      const matches = storage.loadMatchesByTournament(id);
-      const rounds = storage.loadRoundsByTournament(id);
-      const standings = storage.getStandings(id);
-      
-      dispatch({ type: 'SET_TOURNAMENT', payload: tournament });
-      dispatch({ type: 'SET_PARTICIPANTS', payload: participants });
-      dispatch({ type: 'SET_TEAMS', payload: teams });
-      dispatch({ type: 'SET_MATCHES', payload: matches });
-      dispatch({ type: 'SET_ROUNDS', payload: rounds });
-      dispatch({ type: 'SET_STANDINGS', payload: standings });
-    } catch (error) {
-      handleError(error, 'storage');
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
+    }, { tournamentId: id });
   }, [handleError]);
 
   const saveTournament = useCallback(async (tournament: Tournament) => {
-    dispatch({ type: 'SET_ERROR', payload: null });
-    
-    try {
-      await withOptimisticUpdate(
-        `tournament-${tournament.id}`,
-        tournament,
-        async () => {
-          storage.saveTournament(tournament);
-          dispatch({ type: 'SET_TOURNAMENT', payload: tournament });
-        }
-      );
-    } catch (error) {
-      handleError(error, 'storage');
-      throw error;
-    }
+    return performanceMonitor.measureAsync('save-tournament', async () => {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      try {
+        await withOptimisticUpdate(
+          `tournament-${tournament.id}`,
+          tournament,
+          async () => {
+            storage.saveTournament(tournament);
+            dispatch({ type: 'SET_TOURNAMENT', payload: tournament });
+          }
+        );
+      } catch (error) {
+        handleError(error, 'storage');
+        throw error;
+      }
+    }, { tournamentId: tournament.id });
   }, [handleError, withOptimisticUpdate]);
 
   const createTournament = useCallback(async (tournament: Tournament, participantNames: string[]) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
-    
-    try {
-      // Save tournament
-      storage.saveTournament(tournament);
+    return performanceMonitor.measureAsync('create-tournament', async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
       
-      // Create participants
-      const participants: Participant[] = participantNames.map((name, index) => ({
-        id: `participant-${tournament.id}-${index}`,
-        tournamentId: tournament.id,
-        name,
-        statistics: {
-          gamesWon: 0,
-          gamesLost: 0,
-          totalPointsScored: 0,
-          totalPointsAllowed: 0,
-          pointDifferential: 0,
-        },
-      }));
-      
-      // Save participants
-      participants.forEach(participant => storage.saveParticipant(participant));
-      
-      // Update state
-      dispatch({ type: 'SET_TOURNAMENT', payload: tournament });
-      dispatch({ type: 'SET_PARTICIPANTS', payload: participants });
-      dispatch({ type: 'SET_TEAMS', payload: [] });
-      dispatch({ type: 'SET_MATCHES', payload: [] });
-      dispatch({ type: 'SET_ROUNDS', payload: [] });
-      dispatch({ type: 'SET_STANDINGS', payload: participants });
-    } catch (error) {
-      handleError(error, 'storage');
-      throw error;
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
+      try {
+        // Save tournament
+        storage.saveTournament(tournament);
+        
+        // Create participants
+        const participants: Participant[] = participantNames.map((name, index) => ({
+          id: `participant-${tournament.id}-${index}`,
+          tournamentId: tournament.id,
+          name,
+          statistics: {
+            gamesWon: 0,
+            gamesLost: 0,
+            totalPointsScored: 0,
+            totalPointsAllowed: 0,
+            pointDifferential: 0,
+          },
+        }));
+        
+        // Save participants
+        participants.forEach(participant => storage.saveParticipant(participant));
+        
+        // Update state
+        dispatch({ type: 'SET_TOURNAMENT', payload: tournament });
+        dispatch({ type: 'SET_PARTICIPANTS', payload: participants });
+        dispatch({ type: 'SET_TEAMS', payload: [] });
+        dispatch({ type: 'SET_MATCHES', payload: [] });
+        dispatch({ type: 'SET_ROUNDS', payload: [] });
+        dispatch({ type: 'SET_STANDINGS', payload: participants });
+      } catch (error) {
+        handleError(error, 'storage');
+        // Don't re-throw the error to allow the state to be updated
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    }, { tournamentId: tournament.id, participantCount: participantNames.length });
   }, [handleError]);
 
   const deleteTournament = useCallback(async (id: string) => {
@@ -332,7 +339,7 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
       );
     } catch (error) {
       handleError(error, 'storage');
-      throw error;
+      // Don't re-throw the error to allow the state to be updated
     }
   }, [state.participants, state.currentTournament, handleError, withOptimisticUpdate]);
 

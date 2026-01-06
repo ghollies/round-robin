@@ -1,26 +1,71 @@
-import React, { useState } from 'react';
-import { 
-  ScheduleDemo, 
-  ScheduleManagementDemo, 
-  ScoreEntryDemo, 
-  StandingsDashboardDemo 
-} from './index';
+import React, { useState, lazy, Suspense } from 'react';
+
+// Lazy load demo components
+const ScheduleDemo = lazy(() => import('./ScheduleDemo'));
+const ScheduleManagementDemo = lazy(() => import('./ScheduleManagementDemo'));
+const ScoreEntryDemo = lazy(() => import('./ScoreEntryDemo'));
+const StandingsDashboardDemo = lazy(() => import('./StandingsDashboardDemo'));
 
 type DemoPage = 'home' | 'schedule' | 'management' | 'scoring' | 'standings';
 
 export const DemoNavigation: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<DemoPage>('home');
 
+  const DemoLoadingFallback = ({ demoName }: { demoName: string }) => (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '400px',
+      flexDirection: 'column',
+      gap: '20px'
+    }}>
+      <div style={{ 
+        width: '40px', 
+        height: '40px', 
+        border: '4px solid #f3f3f3',
+        borderTop: '4px solid #3498db',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+      <p style={{ color: '#7f8c8d', fontSize: '1.1rem' }}>
+        Loading {demoName} demo...
+      </p>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'schedule':
-        return <ScheduleDemo />;
+        return (
+          <Suspense fallback={<DemoLoadingFallback demoName="Schedule Generation" />}>
+            <ScheduleDemo />
+          </Suspense>
+        );
       case 'management':
-        return <ScheduleManagementDemo />;
+        return (
+          <Suspense fallback={<DemoLoadingFallback demoName="Schedule Management" />}>
+            <ScheduleManagementDemo />
+          </Suspense>
+        );
       case 'scoring':
-        return <ScoreEntryDemo />;
+        return (
+          <Suspense fallback={<DemoLoadingFallback demoName="Score Entry" />}>
+            <ScoreEntryDemo />
+          </Suspense>
+        );
       case 'standings':
-        return <StandingsDashboardDemo />;
+        return (
+          <Suspense fallback={<DemoLoadingFallback demoName="Standings Dashboard" />}>
+            <StandingsDashboardDemo />
+          </Suspense>
+        );
       default:
         return (
           <div style={{ padding: '40px', textAlign: 'center' }}>

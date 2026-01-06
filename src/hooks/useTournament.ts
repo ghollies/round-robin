@@ -13,6 +13,7 @@ export function useTournament() {
     createTournament,
     deleteTournament,
     resetTournament,
+    clearError,
   } = useTournamentContext();
 
   const { currentTournament, loading, error } = state;
@@ -20,12 +21,8 @@ export function useTournament() {
   // Create a new tournament with participants
   const handleCreateTournament = useCallback(
     async (tournament: Tournament, participantNames: string[]) => {
-      try {
-        await createTournament(tournament, participantNames);
-        return tournament.id;
-      } catch (error) {
-        throw error;
-      }
+      await createTournament(tournament, participantNames);
+      return tournament.id;
     },
     [createTournament]
   );
@@ -121,6 +118,7 @@ export function useTournament() {
     updateTournament: handleUpdateTournament,
     deleteTournament: handleDeleteTournament,
     resetTournament,
+    clearError,
     
     // Utilities
     isTournamentStatus,

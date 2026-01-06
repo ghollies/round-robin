@@ -10,8 +10,8 @@ test('renders pickleball tournament scheduler heading', () => {
 
 test('renders tournament setup form', () => {
   render(<App />);
-  const setupHeading = screen.getByRole('heading', { name: /Tournament Setup/i });
-  expect(setupHeading).toBeInTheDocument();
+  const setupHeadings = screen.getAllByRole('heading', { name: /Tournament Setup/i });
+  expect(setupHeadings).toHaveLength(2); // One visible, one screen reader only
   
   const configureText = screen.getByText(/Configure your pickleball tournament parameters/i);
   expect(configureText).toBeInTheDocument();

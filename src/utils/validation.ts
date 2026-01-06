@@ -4,6 +4,31 @@ import { Tournament, Participant, Team, Match, Round } from '../types/tournament
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
+  warnings?: string[];
+}
+
+// Field-specific validation result
+export interface FieldValidationResult {
+  isValid: boolean;
+  error?: string;
+  warning?: string;
+}
+
+// Form validation state
+export interface FormValidationState {
+  [fieldName: string]: FieldValidationResult;
+}
+
+// Real-time validation hook result
+export interface ValidationHookResult {
+  errors: { [fieldName: string]: string };
+  warnings: { [fieldName: string]: string };
+  isValid: boolean;
+  hasWarnings: boolean;
+  validateField: (fieldName: string, value: any, context?: any) => FieldValidationResult;
+  validateAll: (data: any) => ValidationResult;
+  clearFieldError: (fieldName: string) => void;
+  clearAllErrors: () => void;
 }
 
 // Tournament validation
@@ -378,3 +403,274 @@ export function validateWinCondition(
     errors
   };
 }
+
+// Enhanced field validation functions
+export function validateTournamentName(name: string): FieldValidationResult {
+  const trimmedName = name.trim();
+  
+  if (!trimmedName) {
+    return { isValid: false, error: 'Tournament name is required' };
+  }
+  
+  if (trimmedName.length < 3) {
+    return { isValid: false, error: 'Tournament name must be at least 3 characters long' };
+  }
+  
+  if (trimmedName.length > 100) {
+    return { isValid: false, error: 'Tournament name must be less than 100 characters' };
+  }
+  
+  // Check for potentially problematic characters
+  const invalidChars = /[<>:"/\\|?*]/;
+  if (invalidChars.test(trimmedName)) {
+    return { isValid: false, error: 'Tournament name contains invalid characters' };
+  }
+  
+  return { isValid: true };
+}
+
+export function validateParticipantName(name: string, existingNames: string[] = [], mode: 'pair-signup' | 'individual-signup' = 'individual-signup'): FieldValidationResult {
+  const trimmedName = name.trim();
+  
+  if (!trimmedName) {
+    return { isValid: false, error: 'Player name is required' };
+  }
+  
+  if (trimmedName.length < 2) {
+    return { isValid: false, error: 'Player name must be at least 2 characters long' };
+  }
+  
+  if (trimmedName.length > 50) {
+    return { isValid: false, error: 'Player name must be less than 50 characters' };
+  }
+  
+  // Check for duplicate names (case-insensitive)
+  const normalizedName = trimmedName.toLowerCase();
+  const isDuplicate = existingNames.some(existing => 
+    existing.trim().toLowerCase() === normalizedName
+  );
+  
+  if (isDuplicate) {
+    return { isValid: false, error: 'This name is already taken' };
+  }
+  
+  // Check for potentially problematic characters
+  // Allow "/" for pair signup mode (team names like "Smith/Johnson")
+  const invalidChars = mode === 'pair-signup' 
+    ? /[<>:"\\|?*@#$%^&*()+={}[\]]/
+    : /[<>:"/\\|?*@#$%^&*()+={}[\]]/;
+  
+  if (invalidChars.test(trimmedName)) {
+    return { isValid: false, error: 'Player name contains invalid characters' };
+  }
+  
+  // Warning for very short names
+  if (trimmedName.length === 2) {
+    return { 
+      isValid: true, 
+      warning: 'Very short name - consider using a longer name for clarity' 
+    };
+  }
+  
+  return { isValid: true };
+}
+
+export function validateCourtCount(count: number, participantCount?: number): FieldValidationResult {
+  if (!Number.isInteger(count) || count < 1) {
+    return { isValid: false, error: 'Number of courts must be a positive whole number' };
+  }
+  
+  if (count > 16) {
+    return { isValid: false, error: 'Maximum of 16 courts is supported' };
+  }
+  
+  // Warning if too many courts for participant count
+  if (participantCount && count > Math.floor(participantCount / 4)) {
+    const recommendedCourts = Math.max(1, Math.floor(participantCount / 4));
+    return { 
+      isValid: true, 
+      warning: `Consider ${recommendedCourts} court${recommendedCourts === 1 ? '' : 's'} for ${participantCount} players to optimize scheduling` 
+    };
+  }
+  
+  return { isValid: true };
+}
+
+export function validateMatchDuration(duration: number): FieldValidationResult {
+  if (!Number.isInteger(duration) || duration < 15) {
+    return { isValid: false, error: 'Match duration must be at least 15 minutes' };
+  }
+  
+  if (duration > 60) {
+    return { isValid: false, error: 'Match duration cannot exceed 60 minutes' };
+  }
+  
+  // Warning for very short or long durations
+  if (duration < 20) {
+    return { 
+      isValid: true, 
+      warning: 'Very short matches may not allow for proper gameplay' 
+    };
+  }
+  
+  if (duration > 45) {
+    return { 
+      isValid: true, 
+      warning: 'Long matches may extend tournament duration significantly' 
+    };
+  }
+  
+  return { isValid: true };
+}
+
+export function validatePointLimit(limit: number): FieldValidationResult {
+  if (!Number.isInteger(limit) || limit < 1) {
+    return { isValid: false, error: 'Point limit must be a positive whole number' };
+  }
+  
+  if (limit > 50) {
+    return { isValid: false, error: 'Point limit cannot exceed 50 points' };
+  }
+  
+  // Warning for unusual point limits
+  const commonLimits = [11, 15, 21];
+  if (!commonLimits.includes(limit)) {
+    return { 
+      isValid: true, 
+      warning: 'Common point limits are 11, 15, or 21 points' 
+    };
+  }
+  
+  return { isValid: true };
+}
+
+export function validateScore(score: number, pointLimit: number): FieldValidationResult {
+  if (!Number.isInteger(score) || score < 0) {
+    return { isValid: false, error: 'Score must be a non-negative whole number' };
+  }
+  
+  // Allow scores to exceed point limit for win-by-2 scenarios
+  if (score > pointLimit + 10) {
+    return { isValid: false, error: 'Score seems unusually high for this tournament' };
+  }
+  
+  return { isValid: true };
+}
+
+// Storage validation functions
+export function validateStorageQuota(): FieldValidationResult {
+  try {
+    // Check if localStorage is available
+    if (typeof Storage === 'undefined') {
+      return { isValid: false, error: 'Local storage is not supported in this browser' };
+    }
+    
+    // Test storage availability
+    const testKey = '__storage_test__';
+    localStorage.setItem(testKey, 'test');
+    localStorage.removeItem(testKey);
+    
+    // Estimate storage usage (rough approximation)
+    let totalSize = 0;
+    for (let key in localStorage) {
+      if (localStorage.hasOwnProperty(key)) {
+        totalSize += localStorage[key].length + key.length;
+      }
+    }
+    
+    // Warn if approaching storage limits (rough estimate of 5MB limit)
+    const estimatedLimitBytes = 5 * 1024 * 1024; // 5MB
+    const usagePercentage = (totalSize / estimatedLimitBytes) * 100;
+    
+    if (usagePercentage > 80) {
+      return { 
+        isValid: true, 
+        warning: 'Local storage is nearly full. Consider clearing old tournament data.' 
+      };
+    }
+    
+    if (usagePercentage > 90) {
+      return { 
+        isValid: false, 
+        error: 'Local storage is full. Please clear some data before continuing.' 
+      };
+    }
+    
+    return { isValid: true };
+  } catch (error) {
+    return { 
+      isValid: false, 
+      error: 'Unable to access local storage. It may be disabled or full.' 
+    };
+  }
+}
+
+// Comprehensive form validation
+export function createFormValidator<T extends Record<string, any>>(
+  validationRules: { [K in keyof T]?: (value: T[K], context?: T) => FieldValidationResult }
+) {
+  return {
+    validateField: (fieldName: keyof T, value: T[keyof T], context?: T): FieldValidationResult => {
+      const validator = validationRules[fieldName];
+      if (!validator) {
+        return { isValid: true };
+      }
+      return validator(value, context);
+    },
+    
+    validateAll: (data: T): ValidationResult => {
+      const errors: string[] = [];
+      const warnings: string[] = [];
+      
+      for (const [fieldName, validator] of Object.entries(validationRules)) {
+        if (validator && typeof validator === 'function') {
+          const result = validator(data[fieldName as keyof T], data);
+          if (!result.isValid && result.error) {
+            errors.push(`${String(fieldName)}: ${result.error}`);
+          }
+          if (result.warning) {
+            warnings.push(`${String(fieldName)}: ${result.warning}`);
+          }
+        }
+      }
+      
+      const result: ValidationResult = {
+        isValid: errors.length === 0,
+        errors,
+      };
+      
+      if (warnings.length > 0) {
+        result.warnings = warnings;
+      }
+      
+      return result;
+    }
+  };
+}
+
+// Tournament setup form validation rules
+export const tournamentSetupValidationRules = {
+  name: (name: string) => validateTournamentName(name),
+  participantCount: (count: number, context?: any) => {
+    const mode = context?.mode || 'individual-signup';
+    return validateParticipantCount(count, mode);
+  },
+  courtCount: (count: number, context?: any) => 
+    validateCourtCount(count, context?.participantCount),
+  matchDuration: (duration: number) => validateMatchDuration(duration),
+  pointLimit: (limit: number) => validatePointLimit(limit),
+};
+
+// Participant entry validation rules
+export const participantValidationRules = {
+  name: (name: string, context?: { existingNames?: string[] }) => 
+    validateParticipantName(name, context?.existingNames || []),
+};
+
+// Score entry validation rules
+export const scoreValidationRules = {
+  team1Score: (score: number, context?: { pointLimit?: number }) => 
+    validateScore(score, context?.pointLimit || 11),
+  team2Score: (score: number, context?: { pointLimit?: number }) => 
+    validateScore(score, context?.pointLimit || 11),
+};

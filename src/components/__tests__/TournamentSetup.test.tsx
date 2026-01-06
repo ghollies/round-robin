@@ -97,7 +97,7 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
-      expect(screen.getByText(/number of courts must be between 1 and 16/i)).toBeInTheDocument();
+      expect(screen.getByText(/maximum of 16 courts is supported/i)).toBeInTheDocument();
     });
 
     it('validates match duration range', async () => {
@@ -111,7 +111,7 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
-      expect(screen.getByText(/match duration must be between 15 and 60 minutes/i)).toBeInTheDocument();
+      expect(screen.getByText(/match duration must be at least 15 minutes/i)).toBeInTheDocument();
     });
 
     it('validates point limit is positive', async () => {
@@ -125,7 +125,7 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
-      expect(screen.getByText(/point limit must be a positive number/i)).toBeInTheDocument();
+      expect(screen.getByText(/point limit must be a positive whole number/i)).toBeInTheDocument();
     });
 
     it('clears errors when user corrects input', async () => {
@@ -326,6 +326,9 @@ describe('TournamentSetup Component', () => {
       
       const createButton = screen.getByRole('button', { name: /create tournament/i });
       await user.click(createButton);
+      
+      // Debug: Check if the function was called at all
+      expect(mockOnTournamentCreate).toHaveBeenCalled();
       
       expect(mockOnTournamentCreate).toHaveBeenCalledWith(
         expect.objectContaining({

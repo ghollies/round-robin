@@ -1,152 +1,178 @@
-import React, { useState, useEffect } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import TournamentSetup from './TournamentSetup';
-import DemoNavigation from './DemoNavigation';
+import { PageLoadingState } from './LoadingState';
+import { useNotifications } from './NotificationSystem';
 import { useTournament, useParticipants } from '../hooks';
 import { Tournament } from '../types/tournament';
 
+// Lazy load the demo navigation component
+const DemoNavigation = lazy(() => import('./DemoNavigation'));
+
 export function AppContent() {
   const [showDemo, setShowDemo] = useState(false);
-  const { tournament, createTournament, loading, error } = useTournament();
+  const { tournament, createTournament, loading, error, clearError } = useTournament();
   const { participants } = useParticipants();
+  const notifications = useNotifications();
 
   const handleTournamentCreate = async (newTournament: Tournament, participantNames: string[]) => {
     try {
       await createTournament(newTournament, participantNames);
+      // Success notification is handled by the enhanced context
     } catch (error) {
       console.error('Failed to create tournament:', error);
+      // Error notification is handled by the enhanced context
     }
   };
 
+  const handleRetryAfterError = () => {
+    clearError();
+    notifications.showInfo('Retrying', 'Attempting to recover from the error...');
+  };
+
   if (showDemo) {
-    return <DemoNavigation />;
+    return (
+      <Suspense fallback={<PageLoadingState message="Loading demo features..." />}>
+        <DemoNavigation />
+      </Suspense>
+    );
   }
 
   if (loading) {
     return (
-      <div className="App">
-        <header className="App-header">
-          <h1>Loading...</h1>
-        </header>
-      </div>
+      <PageLoadingState message="Loading tournament system..." />
     );
   }
 
   if (error) {
     return (
-      <div className="App">
+      <>
         <header className="App-header">
-          <h1>Error</h1>
-          <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
-            {error.message}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              background: '#e74c3c',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              fontWeight: '500'
-            }}
-          >
-            Reload Page
-          </button>
+          <h1>Pickleball Tournament Scheduler</h1>
+          <p>Create and manage round-robin doubles tournaments</p>
         </header>
-      </div>
+        <main id="main-content" className="container">
+          <div className="error-display" role="alert" aria-live="assertive">
+            <div className="error-icon" aria-hidden="true">⚠️</div>
+            <h2>Something went wrong</h2>
+            <p className="error-message">
+              {error.message}
+            </p>
+            <div className="error-actions">
+              <button
+                onClick={handleRetryAfterError}
+                className="btn btn-primary"
+                type="button"
+                aria-describedby="retry-description"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="btn btn-secondary"
+                type="button"
+                aria-describedby="reload-description"
+              >
+                Reload Page
+              </button>
+            </div>
+            <div className="sr-only">
+              <div id="retry-description">Attempt to recover from the current error</div>
+              <div id="reload-description">Reload the entire page to start fresh</div>
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
   if (tournament) {
     return (
-      <div className="App">
+      <>
         <header className="App-header">
           <h1>Tournament Created Successfully!</h1>
-          <div className="tournament-summary">
-            <h2>{tournament.name}</h2>
-            <p>Mode: {tournament.mode}</p>
-            <p>Participants: {participants.length}</p>
-            <p>Courts: {tournament.settings.courtCount}</p>
-            <p>Match Duration: {tournament.settings.matchDuration} minutes</p>
+          <p>Your tournament is ready to begin</p>
+        </header>
+        <main id="main-content" className="container">
+          <section className="tournament-summary" aria-labelledby="tournament-details">
+            <h2 id="tournament-details">{tournament.name}</h2>
+            <dl>
+              <dt>Mode:</dt>
+              <dd>{tournament.mode}</dd>
+              <dt>Participants:</dt>
+              <dd>{participants.length}</dd>
+              <dt>Courts:</dt>
+              <dd>{tournament.settings.courtCount}</dd>
+              <dt>Match Duration:</dt>
+              <dd>{tournament.settings.matchDuration} minutes</dd>
+            </dl>
+            
             <div className="participants-list">
               <h3>Participants:</h3>
-              <ul>
+              <ul role="list">
                 {participants.map((participant) => (
-                  <li key={participant.id}>{participant.name}</li>
+                  <li key={participant.id} role="listitem">{participant.name}</li>
                 ))}
               </ul>
             </div>
-          </div>
-          <div style={{ marginTop: '30px' }}>
+          </section>
+          
+          <nav className="tournament-actions" aria-label="Tournament actions">
             <button
               onClick={() => setShowDemo(true)}
-              style={{
-                background: '#3498db',
-                color: 'white',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                fontWeight: '500',
-                marginRight: '15px'
-              }}
+              className="btn btn-primary"
+              type="button"
+              aria-describedby="demo-description"
             >
               View Feature Demos
             </button>
             <button
               onClick={() => window.location.reload()}
-              style={{
-                background: '#95a5a6',
-                color: 'white',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                fontWeight: '500'
-              }}
+              className="btn btn-secondary"
+              type="button"
+              aria-describedby="new-tournament-description"
             >
               Create New Tournament
             </button>
-          </div>
-        </header>
-      </div>
+            <div className="sr-only">
+              <div id="demo-description">Explore interactive demonstrations of tournament features</div>
+              <div id="new-tournament-description">Start over and create a new tournament</div>
+            </div>
+          </nav>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="App">
+    <>
       <header className="App-header">
         <h1>Pickleball Tournament Scheduler</h1>
-        <p style={{ fontSize: '1.1rem', color: '#7f8c8d', marginBottom: '30px' }}>
-          Create and manage round-robin doubles tournaments with individual player signup
-        </p>
+        <p>Create and manage round-robin doubles tournaments with individual player signup</p>
       </header>
-      <main>
-        <div style={{ marginBottom: '30px' }}>
-          <button
-            onClick={() => setShowDemo(true)}
-            style={{
-              background: '#f39c12',
-              color: 'white',
-              border: 'none',
-              padding: '15px 30px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '1.1rem',
-              fontWeight: '600',
-              marginBottom: '20px',
-              boxShadow: '0 4px 12px rgba(243, 156, 18, 0.3)'
-            }}
-          >
-            🎯 View Interactive Demos
-          </button>
-        </div>
-        <TournamentSetup onTournamentCreate={handleTournamentCreate} />
+      <main id="main-content" className="container">
+        <section className="intro-section">
+          <nav className="demo-navigation" aria-label="Demo navigation">
+            <button
+              onClick={() => setShowDemo(true)}
+              className="btn btn-outline demo-button"
+              type="button"
+              aria-describedby="demo-button-description"
+            >
+              <span aria-hidden="true">🎯</span> View Interactive Demos
+            </button>
+            <div className="sr-only">
+              <div id="demo-button-description">
+                Explore interactive demonstrations of tournament scheduling features before creating your own tournament
+              </div>
+            </div>
+          </nav>
+        </section>
+        
+        <section aria-labelledby="tournament-setup-heading">
+          <h2 id="tournament-setup-heading" className="sr-only">Tournament Setup</h2>
+          <TournamentSetup onTournamentCreate={handleTournamentCreate} />
+        </section>
       </main>
-    </div>
+    </>
   );
 }

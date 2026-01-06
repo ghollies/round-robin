@@ -1,0 +1,342 @@
+/* Notification System Component */
+.notification-container {
+  position: fixed;
+  top: var(--spacing-5);
+  right: var(--spacing-5);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.notification {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-xl);
+  border-left: 4px solid;
+  pointer-events: auto;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all var(--transition-slow);
+  max-width: 100%;
+  word-wrap: break-word;
+  border: 1px solid var(--color-border-light);
+}
+
+.notification-visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification-exiting {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* Type-specific styling */
+.notification-success {
+  border-left-color: var(--color-success);
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-success-light) 100%);
+}
+
+.notification-error {
+  border-left-color: var(--color-danger);
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-danger-light) 100%);
+}
+
+.notification-warning {
+  border-left-color: var(--color-warning);
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-warning-light) 100%);
+}
+
+.notification-info {
+  border-left-color: var(--color-info);
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-info-light) 100%);
+}
+
+.notification-loading {
+  border-left-color: var(--color-secondary);
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  margin-top: var(--spacing-1);
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border-light);
+  border-top: 2px solid var(--color-secondary);
+  border-radius: var(--border-radius-full);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-1);
+  color: var(--color-text-primary);
+}
+
+.notification-message {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-2);
+}
+
+.notification-action {
+  background: none;
+  border: 1px solid var(--color-border-medium);
+  color: var(--color-text-secondary);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-height: 32px; /* Accessibility: minimum touch target for small buttons */
+}
+
+.notification-action:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-dark);
+  color: var(--color-text-primary);
+}
+
+.notification-success .notification-action {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.notification-success .notification-action:hover {
+  background: var(--color-success);
+  color: var(--color-text-inverse);
+}
+
+.notification-error .notification-action {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.notification-error .notification-action:hover {
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+}
+
+.notification-warning .notification-action {
+  border-color: var(--color-warning);
+  color: var(--color-warning-dark);
+}
+
+.notification-warning .notification-action:hover {
+  background: var(--color-warning);
+  color: var(--color-text-primary);
+}
+
+.notification-info .notification-action {
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.notification-info .notification-action:hover {
+  background: var(--color-info);
+  color: var(--color-text-inverse);
+}
+
+.notification-dismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-base);
+  margin-top: calc(var(--spacing-1) * -1);
+  min-height: 32px; /* Accessibility: minimum touch target */
+  min-width: 32px;
+}
+
+.notification-dismiss:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+.notification-dismiss:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .notification-container {
+    top: var(--spacing-3);
+    right: var(--spacing-3);
+    left: var(--spacing-3);
+    max-width: none;
+  }
+
+  .notification {
+    padding: var(--spacing-3);
+    gap: var(--spacing-3);
+  }
+
+  .notification-title {
+    font-size: var(--font-size-sm);
+  }
+
+  .notification-message {
+    font-size: var(--font-size-xs);
+  }
+
+  .notification-icon {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-container {
+    top: var(--spacing-2);
+    right: var(--spacing-2);
+    left: var(--spacing-2);
+  }
+
+  .notification {
+    padding: var(--spacing-3);
+    gap: var(--spacing-2);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .notification {
+    border: 2px solid;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .notification-success {
+    border-color: var(--color-success);
+    background: var(--color-bg-primary);
+  }
+
+  .notification-error {
+    border-color: var(--color-danger);
+    background: var(--color-bg-primary);
+  }
+
+  .notification-warning {
+    border-color: var(--color-warning);
+    background: var(--color-bg-primary);
+  }
+
+  .notification-info {
+    border-color: var(--color-info);
+    background: var(--color-bg-primary);
+  }
+
+  .notification-loading {
+    border-color: var(--color-secondary);
+    background: var(--color-bg-primary);
+  }
+
+  .notification-action {
+    border: 2px solid;
+  }
+
+  .notification-dismiss {
+    border: 1px solid var(--color-border-dark);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .notification {
+    transition: opacity var(--transition-base);
+  }
+
+  .loading-spinner {
+    animation: none;
+    border: 2px solid var(--color-secondary);
+    border-top-color: transparent;
+  }
+
+  .notification-action,
+  .notification-dismiss {
+    transition: none;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .notification-success {
+    background: linear-gradient(135deg, var(--color-bg-primary) 0%, rgba(40, 167, 69, 0.1) 100%);
+  }
+
+  .notification-error {
+    background: linear-gradient(135deg, var(--color-bg-primary) 0%, rgba(220, 53, 69, 0.1) 100%);
+  }
+
+  .notification-warning {
+    background: linear-gradient(135deg, var(--color-bg-primary) 0%, rgba(255, 193, 7, 0.1) 100%);
+  }
+
+  .notification-info {
+    background: linear-gradient(135deg, var(--color-bg-primary) 0%, rgba(23, 162, 184, 0.1) 100%);
+  }
+
+  .notification-loading {
+    background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  }
+}
+
+/* Focus management for accessibility */
+.notification:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Animation performance optimization */
+.notification {
+  will-change: transform, opacity;
+}
+
+.notification-visible,
+.notification-exiting {
+  will-change: auto;
+}
+
+/* Print styles */
+@media print {
+  .notification-container {
+    display: none !important;
+  }
+}

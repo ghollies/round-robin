@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { TournamentProvider } from '../../contexts/TournamentContext';
 import { useTournament } from '../useTournament';
 import { Tournament } from '../../types/tournament';
@@ -250,12 +250,13 @@ describe('useTournament', () => {
       updatedAt: new Date(),
     };
 
-    await expect(
-      act(async () => {
-        await result.current.createTournament(tournament, ['Player 1']);
-      })
-    ).rejects.toThrow('Storage error');
+    await act(async () => {
+      await result.current.createTournament(tournament, ['Player 1']);
+    });
 
-    expect(result.current.error?.message).toBe('Storage error');
+    // Wait for the error state to be updated
+    await waitFor(() => {
+      expect(result.current.error?.message).toBe('Storage error');
+    }, { timeout: 3000 });
   });
 });

@@ -9,6 +9,95 @@ import {
   serializeArray,
   deserializeArray
 } from './index';
+import { performanceMonitor } from './performance';
+
+// Batch operation queue for optimizing multiple storage operations
+interface BatchOperation {
+  type: 'save' | 'delete';
+  key: string;
+  data?: any;
+  serializer?: (item: any) => string;
+}
+
+class StorageBatch {
+  private operations: BatchOperation[] = [];
+  private timeout: NodeJS.Timeout | null = null;
+  private readonly BATCH_DELAY = 100; // 100ms delay before executing batch
+
+  add(operation: BatchOperation): void {
+    this.operations.push(operation);
+    this.scheduleBatchExecution();
+  }
+
+  private scheduleBatchExecution(): void {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
+    
+    this.timeout = setTimeout(() => {
+      this.executeBatch();
+    }, this.BATCH_DELAY);
+  }
+
+  private executeBatch(): void {
+    if (this.operations.length === 0) return;
+
+    performanceMonitor.measure('storage-batch-execution', () => {
+      // Group operations by key to optimize
+      const groupedOps = new Map<string, BatchOperation>();
+      
+      // Keep only the latest operation for each key
+      this.operations.forEach(op => {
+        groupedOps.set(op.key, op);
+      });
+
+      // Execute operations
+      groupedOps.forEach(op => {
+        try {
+          if (op.type === 'save' && op.data !== undefined) {
+            const serialized = op.serializer ? op.serializer(op.data) : JSON.stringify(op.data);
+            localStorage.setItem(op.key, serialized);
+          } else if (op.type === 'delete') {
+            localStorage.removeItem(op.key);
+          }
+        } catch (error) {
+          console.error(`Batch operation failed for key ${op.key}:`, error);
+        }
+      });
+    }, { operationCount: this.operations.length });
+
+    this.operations = [];
+    this.timeout = null;
+  }
+
+  // Force immediate execution of pending operations
+  flush(): void {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+    this.executeBatch();
+  }
+}
+
+// Global batch instance
+const storageBatch = new StorageBatch();
+
+// Simple compression for large data (using basic string compression)
+function compressData(data: string): string {
+  // Simple run-length encoding for repeated patterns
+  // In a real implementation, you might use a library like pako for gzip compression
+  return data.replace(/(.)\1{2,}/g, (match, char) => {
+    return `${char}*${match.length}`;
+  });
+}
+
+function decompressData(data: string): string {
+  // Reverse the simple compression
+  return data.replace(/(.)\*(\d+)/g, (match, char, count) => {
+    return char.repeat(parseInt(count));
+  });
+}
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -58,38 +147,76 @@ function checkStorageQuota(): void {
   }
 }
 
-// Generic storage operations
-function saveToStorage<T>(key: string, data: T, serializer?: (item: T) => string): void {
-  try {
-    checkStorageQuota();
-    const serialized = serializer ? serializer(data) : JSON.stringify(data);
-    localStorage.setItem(key, serialized);
-  } catch (error) {
-    if (error instanceof StorageError) {
-      throw error;
-    }
-    throw new StorageError(
-      `Failed to save data to storage: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      'access_denied',
-      error
-    );
+// Generic storage operations with batching support
+function saveToStorage<T>(key: string, data: T, serializer?: (item: T) => string, useBatch: boolean = false): void {
+  if (useBatch) {
+    storageBatch.add({
+      type: 'save',
+      key,
+      data,
+      ...(serializer && { serializer })
+    });
+    return;
   }
+
+  performanceMonitor.measure('storage-save', () => {
+    try {
+      checkStorageQuota();
+      let serialized = serializer ? serializer(data) : JSON.stringify(data);
+      
+      // Apply compression for large data (> 1KB)
+      if (serialized.length > 1024) {
+        serialized = compressData(serialized);
+      }
+      
+      localStorage.setItem(key, serialized);
+    } catch (error) {
+      if (error instanceof StorageError) {
+        throw error;
+      }
+      throw new StorageError(
+        `Failed to save data to storage: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'access_denied',
+        error
+      );
+    }
+  }, { key, dataSize: JSON.stringify(data).length });
 }
 
 function loadFromStorage<T>(key: string, deserializer?: (data: string) => T): T | null {
-  try {
-    const data = localStorage.getItem(key);
-    if (data === null) {
-      return null;
+  return performanceMonitor.measure('storage-load', () => {
+    try {
+      let data = localStorage.getItem(key);
+      if (data === null) {
+        return null;
+      }
+      
+      // Try to decompress if it looks compressed
+      if (data.includes('*')) {
+        try {
+          data = decompressData(data);
+        } catch {
+          // If decompression fails, use original data
+        }
+      }
+      
+      return deserializer ? deserializer(data) : JSON.parse(data);
+    } catch (error) {
+      throw new StorageError(
+        `Failed to parse data from storage: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'parse_error',
+        error
+      );
     }
-    return deserializer ? deserializer(data) : JSON.parse(data);
-  } catch (error) {
-    throw new StorageError(
-      `Failed to parse data from storage: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      'parse_error',
-      error
-    );
-  }
+  }, { key });
+}
+
+// Batch operations for multiple saves
+function saveBatch<T>(operations: Array<{ key: string; data: T; serializer?: (item: T) => string }>): void {
+  operations.forEach(op => {
+    saveToStorage(op.key, op.data, op.serializer, true);
+  });
+  storageBatch.flush(); // Force immediate execution for batch operations
 }
 
 
