@@ -126,3 +126,14 @@
   - Create loading states and performance monitoring
   - Final testing and bug fixes
   - _Requirements: 5.1, 8.3_
+
+- [x] 18. Add tournament listing and management dashboard
+  - Create tournament list component showing all saved tournaments
+  - Display tournament status (setup, active, completed) with visual indicators
+  - Show key tournament info (name, participants, creation date, progress)
+  - Add actions to resume/continue managing existing tournaments
+  - Implement tournament deletion with confirmation dialog
+  - Replace demo navigation with tournament listing on home page
+  - Add search and filter functionality for tournament list
+  - Create responsive design for tournament cards/list view
+  - _Requirements: 1.1, 6.1, 8.6_

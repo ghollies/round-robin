@@ -1,6 +1,6 @@
 import { Tournament, Participant, Team, Match, Round } from '../types/tournament';
 import { generateIndividualSignupRoundRobin } from './roundRobinAlgorithm';
-import { createTeam } from './index';
+import { createTeam } from './factories';
 
 export interface ScheduleSettings {
   startTime: Date;

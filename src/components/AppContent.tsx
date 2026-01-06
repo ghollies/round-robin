@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from 'react';
 import TournamentSetup from './TournamentSetup';
 import TournamentManagement from './TournamentManagement';
+import TournamentList from './TournamentList';
 import { PageLoadingState } from './LoadingState';
 import { useNotifications } from './NotificationSystem';
 import { useTournament, useParticipants } from '../hooks';
@@ -11,18 +12,38 @@ const DemoNavigation = lazy(() => import('./DemoNavigation'));
 
 export function AppContent() {
   const [showDemo, setShowDemo] = useState(false);
-  const { tournament, createTournament, loading, error, clearError } = useTournament();
+  const [showSetup, setShowSetup] = useState(false);
+  const { tournament, createTournament, loadTournament, loading, error, clearError } = useTournament();
   const { participants } = useParticipants();
   const notifications = useNotifications();
 
   const handleTournamentCreate = async (newTournament: Tournament, participantNames: string[]) => {
     try {
       await createTournament(newTournament, participantNames);
+      setShowSetup(false);
       // Success notification is handled by the enhanced context
     } catch (error) {
       console.error('Failed to create tournament:', error);
       // Error notification is handled by the enhanced context
     }
+  };
+
+  const handleTournamentSelect = async (selectedTournament: Tournament) => {
+    try {
+      await loadTournament(selectedTournament.id);
+      // Tournament will be loaded and the UI will switch to management view
+    } catch (error) {
+      console.error('Failed to load tournament:', error);
+      notifications.showError('Error', 'Failed to load tournament');
+    }
+  };
+
+  const handleCreateNew = () => {
+    setShowSetup(true);
+  };
+
+  const handleBackToList = () => {
+    setShowSetup(false);
   };
 
   const handleRetryAfterError = () => {
@@ -96,6 +117,26 @@ export function AppContent() {
     );
   }
 
+  if (showSetup) {
+    return (
+      <>
+        <header className="App-header">
+          <h1>Pickleball Tournament Scheduler</h1>
+          <p>Create and manage round-robin doubles tournaments with individual player signup</p>
+        </header>
+        <main id="main-content" className="container">
+          <section aria-labelledby="tournament-setup-heading">
+            <h2 id="tournament-setup-heading" className="sr-only">Tournament Setup</h2>
+            <TournamentSetup 
+              onTournamentCreate={handleTournamentCreate}
+              onBack={handleBackToList}
+            />
+          </section>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <header className="App-header">
@@ -103,28 +144,10 @@ export function AppContent() {
         <p>Create and manage round-robin doubles tournaments with individual player signup</p>
       </header>
       <main id="main-content" className="container">
-        <section className="intro-section">
-          <nav className="demo-navigation" aria-label="Demo navigation">
-            <button
-              onClick={() => setShowDemo(true)}
-              className="btn btn-outline demo-button"
-              type="button"
-              aria-describedby="demo-button-description"
-            >
-              <span aria-hidden="true">🎯</span> View Interactive Demos
-            </button>
-            <div className="sr-only">
-              <div id="demo-button-description">
-                Explore interactive demonstrations of tournament scheduling features before creating your own tournament
-              </div>
-            </div>
-          </nav>
-        </section>
-        
-        <section aria-labelledby="tournament-setup-heading">
-          <h2 id="tournament-setup-heading" className="sr-only">Tournament Setup</h2>
-          <TournamentSetup onTournamentCreate={handleTournamentCreate} />
-        </section>
+        <TournamentList
+          onTournamentSelect={handleTournamentSelect}
+          onCreateNew={handleCreateNew}
+        />
       </main>
     </>
   );

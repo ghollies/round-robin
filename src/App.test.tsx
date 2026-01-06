@@ -1,6 +1,21 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import App from './App';
+
+// Mock the storage functions to return empty tournaments list
+jest.mock('./utils/storage', () => ({
+  loadTournaments: jest.fn(() => []),
+  loadParticipantsByTournament: jest.fn(() => []),
+  initializeStorage: jest.fn(),
+  loadTournament: jest.fn(() => null),
+  saveTournament: jest.fn(),
+  deleteTournament: jest.fn(),
+  loadParticipants: jest.fn(() => []),
+  loadTeams: jest.fn(() => []),
+  loadMatches: jest.fn(() => []),
+  loadRounds: jest.fn(() => []),
+  getStandings: jest.fn(() => []),
+}));
 
 test('renders pickleball tournament scheduler heading', () => {
   render(<App />);
@@ -8,11 +23,21 @@ test('renders pickleball tournament scheduler heading', () => {
   expect(headingElement).toBeInTheDocument();
 });
 
-test('renders tournament setup form', () => {
+test('renders tournament list by default', async () => {
   render(<App />);
-  const setupHeadings = screen.getAllByRole('heading', { name: /Tournament Setup/i });
-  expect(setupHeadings).toHaveLength(2); // One visible, one screen reader only
   
-  const configureText = screen.getByText(/Configure your pickleball tournament parameters/i);
-  expect(configureText).toBeInTheDocument();
+  // Wait for the tournament list to load
+  await waitFor(() => {
+    // Should show the tournament list heading
+    const listHeading = screen.getByRole('heading', { name: /Your Tournaments/i });
+    expect(listHeading).toBeInTheDocument();
+  });
+  
+  // Should show empty state since no tournaments exist
+  const emptyStateText = screen.getByText(/No tournaments yet/i);
+  expect(emptyStateText).toBeInTheDocument();
+  
+  // Should show create tournament button
+  const createButton = screen.getByText(/Create New Tournament/i);
+  expect(createButton).toBeInTheDocument();
 });

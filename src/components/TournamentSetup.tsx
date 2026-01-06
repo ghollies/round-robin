@@ -14,6 +14,7 @@ import './TournamentSetup.css';
 
 interface TournamentSetupProps {
   onTournamentCreate: (tournament: Tournament, participants: string[]) => void;
+  onBack?: () => void;
 }
 
 interface TournamentFormData {
@@ -31,7 +32,7 @@ interface FormErrors {
   [key: string]: string;
 }
 
-const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate }) => {
+const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, onBack }) => {
   // Performance monitoring
   usePerfMeasure('TournamentSetup');
 
@@ -459,6 +460,11 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate })
         </div>
 
         <div className="form-actions">
+          {onBack && (
+            <button type="button" onClick={onBack} className="btn-secondary">
+              ← Back to Tournament List
+            </button>
+          )}
           <button type="button" onClick={handleNext} className="btn-primary">
             Next: Enter {formData.mode === 'pair-signup' ? 'Teams' : 'Players'}
           </button>

@@ -2,6 +2,7 @@
 export { AppContent } from './AppContent';
 export { default as TournamentSetup } from './TournamentSetup';
 export { default as TournamentManagement } from './TournamentManagement';
+export { default as TournamentList } from './TournamentList';
 export { default as ScheduleDisplay } from './ScheduleDisplay';
 export { default as ScheduleManagement } from './ScheduleManagement';
 export { default as ScoreEntry } from './ScoreEntry';
