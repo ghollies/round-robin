@@ -29,19 +29,21 @@ The application is a client-side only web application using local browser storag
 ### Frontend Components
 
 #### 1. Tournament Setup Component
-- **Purpose**: Configure tournament parameters and individual player entry
+- **Purpose**: Configure tournament parameters, individual player entry, and automatic schedule generation
 - **Key Features**:
   - Parameter validation (players, courts, scoring rules)
   - Individual player entry with duplicate detection
   - Tournament configuration (courts, time, scoring)
+  - Automatic schedule generation upon completion
+  - Seamless transition to schedule view
 
-#### 2. Schedule Generator Component
-- **Purpose**: Generate and display tournament schedules
+#### 2. Schedule Display Component
+- **Purpose**: Display automatically generated tournament schedules
 - **Key Features**:
-  - Round robin algorithm implementation
-  - Court and time slot optimization
-  - Bye round management for odd participant counts
   - Schedule visualization with multiple views
+  - Real-time schedule updates
+  - Print and export functionality
+  - Match status tracking
 
 #### 3. Schedule Management Component
 - **Purpose**: Real-time schedule modifications during tournament

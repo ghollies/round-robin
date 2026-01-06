@@ -63,15 +63,16 @@ This feature will create a web-based application that enables tournament directo
 
 ### Requirement 5
 
-**User Story:** As a tournament director, I want the system to automatically generate optimized schedules with proper court and time allocation, so that tournaments run efficiently with minimal delays.
+**User Story:** As a tournament director, I want the system to automatically generate optimized schedules immediately upon tournament creation, so that tournaments run efficiently with minimal delays and no manual schedule generation step is required.
 
 #### Acceptance Criteria
 
-1. WHEN the director initiates schedule generation THEN the system SHALL create matches ensuring each team plays every other team exactly once
-2. WHEN generating the schedule THEN the system SHALL distribute matches evenly across available time slots
-3. WHEN assigning courts THEN the system SHALL optimize court usage to minimize tournament duration
-4. WHEN creating the schedule THEN the system SHALL ensure no team plays consecutive matches without appropriate rest periods
-5. IF the tournament cannot fit in a single day THEN the system SHALL organize matches across multiple sessions with clear session breaks
+1. WHEN the director completes tournament setup with all participants entered THEN the system SHALL automatically create matches ensuring each team plays every other team exactly once
+2. WHEN the tournament is created THEN the system SHALL automatically distribute matches evenly across available time slots
+3. WHEN assigning courts THEN the system SHALL automatically optimize court usage to minimize tournament duration
+4. WHEN creating the schedule THEN the system SHALL automatically ensure no team plays consecutive matches without appropriate rest periods
+5. IF the tournament cannot fit in a single day THEN the system SHALL automatically organize matches across multiple sessions with clear session breaks
+6. WHEN the tournament setup is complete THEN the system SHALL immediately transition to the schedule view without requiring manual schedule generation
 
 ### Requirement 6
 

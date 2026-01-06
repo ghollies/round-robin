@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { Tournament, Participant, Team, Match, Round, AppError } from '../types/tournament';
+import { generateOptimizedSchedule } from '../utils/scheduleGenerator';
 import * as storage from '../utils/storage';
 
 // State interface
@@ -277,13 +278,46 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
       // Save participants
       participants.forEach(participant => storage.saveParticipant(participant));
       
-      // Update state
+      // Set initial tournament and participants state
       dispatch({ type: 'SET_TOURNAMENT', payload: tournament });
       dispatch({ type: 'SET_PARTICIPANTS', payload: participants });
-      dispatch({ type: 'SET_TEAMS', payload: [] });
-      dispatch({ type: 'SET_MATCHES', payload: [] });
-      dispatch({ type: 'SET_ROUNDS', payload: [] });
       dispatch({ type: 'SET_STANDINGS', payload: participants });
+      
+      try {
+        // Automatically generate schedule
+        const generatedSchedule = generateOptimizedSchedule(tournament, participants, {
+          startTime: new Date(Date.now() + 60000), // Start in 1 minute
+          restPeriod: 15
+        });
+        
+        // Ensure schedule was generated successfully
+        if (!generatedSchedule || !generatedSchedule.teams) {
+          throw new Error('Failed to generate tournament schedule');
+        }
+        
+        // Save generated schedule data
+        generatedSchedule.teams.forEach(team => storage.saveTeam(team));
+        generatedSchedule.rounds.forEach(round => storage.saveRound(round));
+        generatedSchedule.scheduledMatches.forEach(match => storage.saveMatch(match));
+        
+        // Update tournament status to active since schedule is generated
+        const updatedTournament: Tournament = {
+          ...tournament,
+          status: 'active',
+          updatedAt: new Date(),
+        };
+        storage.saveTournament(updatedTournament);
+        
+        // Update state with all generated data
+        dispatch({ type: 'SET_TOURNAMENT', payload: updatedTournament });
+        dispatch({ type: 'SET_TEAMS', payload: generatedSchedule.teams });
+        dispatch({ type: 'SET_MATCHES', payload: generatedSchedule.scheduledMatches });
+        dispatch({ type: 'SET_ROUNDS', payload: generatedSchedule.rounds });
+      } catch (scheduleError) {
+        // Schedule generation failed, but tournament is still created in 'setup' status
+        console.warn('Schedule generation failed:', scheduleError);
+        // Tournament remains in 'setup' status, user can manually generate schedule later
+      }
     } catch (error) {
       handleError(error, 'storage');
       // Don't re-throw the error to allow the state to be updated

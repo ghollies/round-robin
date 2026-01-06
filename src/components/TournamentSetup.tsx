@@ -310,7 +310,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
   }
 
   return (
-    <LoadingOverlay isLoading={isSubmitting} message="Creating tournament...">
+    <LoadingOverlay isLoading={isSubmitting} message="Creating tournament and generating schedule...">
       <div className="tournament-setup">
       <div className="setup-header">
         <h2>Tournament Setup</h2>

@@ -22,12 +22,14 @@
   - Write unit tests for all storage operations
   - _Requirements: 1.8, 8.3_
 
-- [x] 4. Build tournament setup and player entry components
+- [x] 4. Build tournament setup and player entry components with automatic schedule generation
   - Create tournament configuration form with validation
   - Implement player entry interface with duplicate detection
   - Add form validation for all tournament parameters
+  - Integrate automatic schedule generation upon tournament completion
+  - Create seamless transition from setup to schedule view
   - Create responsive UI components with proper error display
-  - _Requirements: 1.1, 1.2, 1.5, 1.6, 1.7, 2.1, 2.2, 2.4, 2.5_
+  - _Requirements: 1.1, 1.2, 1.5, 1.6, 1.7, 2.1, 2.2, 2.4, 2.5, 5.6_
 
 - [x] 5. Implement individual signup round robin algorithm
   - Create partnership matrix tracking system
@@ -111,7 +113,16 @@
   - Test localStorage operations and data persistence
   - _Requirements: 4.2, 4.3, 4.4, 5.1, 8.3_
 
-- [ ] 16. Set up GitHub Pages deployment
+- [x] 16. Fix individual signup round robin algorithm partnership generation
+  - Debug and fix the "Not all partnerships have been used" error in schedule generation
+  - Implement proper opponent team creation for individual signup tournaments
+  - Ensure each player partners with every other player exactly once
+  - Ensure each player plays against every other player exactly twice
+  - Fix the partnership matrix validation to work with the complete algorithm
+  - Add comprehensive unit tests for the fixed algorithm
+  - _Requirements: 4.2, 4.3, 4.4, 4.5_
+
+- [ ] 17. Set up GitHub Pages deployment
   - Configure GitHub Actions workflow for automated deployment
   - Set up build optimization for production
   - Add environment-specific configuration

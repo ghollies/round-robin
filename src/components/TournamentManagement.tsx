@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tournament, Participant } from '../types/tournament';
-import { useTournament, useParticipants } from '../hooks';
+import { useTournamentContext } from '../contexts/TournamentContext';
 import { generateOptimizedSchedule, GeneratedSchedule, ScheduledMatch } from '../utils/scheduleGenerator';
 import ScheduleDisplay from './ScheduleDisplay';
 import ScheduleManagement from './ScheduleManagement';
@@ -22,12 +22,67 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
   participants,
   onBack
 }) => {
-  const [currentView, setCurrentView] = useState<ManagementView>('overview');
+  const { state } = useTournamentContext();
+  const [currentView, setCurrentView] = useState<ManagementView>('schedule'); // Start with schedule view since it's auto-generated
   const [schedule, setSchedule] = useState<GeneratedSchedule | null>(null);
   const [isGeneratingSchedule, setIsGeneratingSchedule] = useState(false);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
 
-  const generateSchedule = async () => {
+  // Check if schedule already exists from context and build GeneratedSchedule object
+  useEffect(() => {
+    if (state.matches.length > 0 && state.teams.length > 0 && state.rounds.length > 0) {
+      // Convert context data to GeneratedSchedule format
+      const scheduledMatches: ScheduledMatch[] = state.matches.map(match => {
+        const team1 = state.teams.find(t => t.id === match.team1Id);
+        const team2 = state.teams.find(t => t.id === match.team2Id);
+        
+        const team1Players = team1 ? [
+          participants.find(p => p.id === team1.player1Id),
+          participants.find(p => p.id === team1.player2Id)
+        ].filter(Boolean) as Participant[] : [];
+        
+        const team2Players = team2 ? [
+          participants.find(p => p.id === team2.player1Id),
+          participants.find(p => p.id === team2.player2Id)
+        ].filter(Boolean) as Participant[] : [];
+
+        return {
+          ...match,
+          teams: {
+            team1: team1!,
+            team2: team2!
+          },
+          participants: {
+            team1Players,
+            team2Players
+          }
+        };
+      });
+
+      // Calculate optimization stats
+      const totalDuration = Math.max(...state.matches.map(m => 
+        new Date(m.scheduledTime).getTime() + (tournament.settings.matchDuration * 60000)
+      )) - Math.min(...state.matches.map(m => new Date(m.scheduledTime).getTime()));
+      
+      const optimization = {
+        totalDuration: Math.floor(totalDuration / 60000), // Convert to minutes
+        sessionsCount: 1,
+        averageRestPeriod: 15,
+        courtUtilization: 85 // Approximate value
+      };
+
+      const generatedSchedule: GeneratedSchedule = {
+        rounds: state.rounds,
+        scheduledMatches,
+        optimization,
+        teams: state.teams
+      };
+
+      setSchedule(generatedSchedule);
+    }
+  }, [state.matches, state.teams, state.rounds, participants, tournament.settings.matchDuration]);
+
+  const regenerateSchedule = async () => {
     setIsGeneratingSchedule(true);
     setScheduleError(null);
     
@@ -157,27 +212,26 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
 
         <div className="schedule-section">
           {!schedule ? (
-            <div className="schedule-prompt">
-              <h3>Ready to Generate Schedule</h3>
-              <p>Generate the tournament schedule to begin managing matches and tracking scores.</p>
+            <div className="schedule-loading">
+              <h3>Schedule Loading...</h3>
+              <p>Your tournament schedule is being prepared automatically.</p>
               
               {scheduleError && (
                 <div className="error-message">
                   Error: {scheduleError}
+                  <button
+                    onClick={regenerateSchedule}
+                    disabled={isGeneratingSchedule}
+                    className="btn btn-secondary"
+                  >
+                    {isGeneratingSchedule ? 'Regenerating...' : 'Try Again'}
+                  </button>
                 </div>
               )}
-              
-              <button
-                onClick={generateSchedule}
-                disabled={isGeneratingSchedule}
-                className="btn btn-primary btn-large"
-              >
-                {isGeneratingSchedule ? 'Generating Schedule...' : 'Generate Tournament Schedule'}
-              </button>
             </div>
           ) : (
             <div className="schedule-ready">
-              <h3>Schedule Generated ✓</h3>
+              <h3>Schedule Ready ✓</h3>
               <div className="schedule-stats">
                 <div className="stat">
                   <strong>{schedule.scheduledMatches.length}</strong>
@@ -196,12 +250,21 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
                   <span>Court Utilization</span>
                 </div>
               </div>
-              <button
-                onClick={() => setCurrentView('schedule')}
-                className="btn btn-primary"
-              >
-                View Schedule
-              </button>
+              <div className="schedule-actions">
+                <button
+                  onClick={() => setCurrentView('schedule')}
+                  className="btn btn-primary"
+                >
+                  View Schedule
+                </button>
+                <button
+                  onClick={regenerateSchedule}
+                  disabled={isGeneratingSchedule}
+                  className="btn btn-outline"
+                >
+                  {isGeneratingSchedule ? 'Regenerating...' : 'Regenerate Schedule'}
+                </button>
+              </div>
             </div>
           )}
         </div>

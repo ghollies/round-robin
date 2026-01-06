@@ -8,6 +8,33 @@ import * as storage from '../../utils/storage';
 jest.mock('../../utils/storage');
 const mockStorage = storage as jest.Mocked<typeof storage>;
 
+// Mock the schedule generator with a more explicit mock
+const mockGenerateOptimizedSchedule = jest.fn(() => ({
+  rounds: [],
+  scheduledMatches: [],
+  optimization: {
+    totalDuration: 120,
+    sessionsCount: 1,
+    averageRestPeriod: 15,
+    courtUtilization: 85
+  },
+  teams: []
+}));
+
+jest.mock('../../utils/scheduleGenerator', () => ({
+  generateOptimizedSchedule: jest.fn(() => ({
+    rounds: [],
+    scheduledMatches: [],
+    optimization: {
+      totalDuration: 120,
+      sessionsCount: 1,
+      averageRestPeriod: 15,
+      courtUtilization: 85
+    },
+    teams: []
+  }))
+}));
+
 // Test component that uses the context
 function TestComponent() {
   const {
@@ -132,6 +159,9 @@ describe('TournamentContext', () => {
   it('should create tournament successfully', async () => {
     mockStorage.saveTournament.mockImplementation(() => {});
     mockStorage.saveParticipant.mockImplementation(() => {});
+    mockStorage.saveTeam.mockImplementation(() => {});
+    mockStorage.saveRound.mockImplementation(() => {});
+    mockStorage.saveMatch.mockImplementation(() => {});
 
     render(
       <TournamentProvider>
@@ -148,7 +178,7 @@ describe('TournamentContext', () => {
       expect(screen.getByTestId('participants-count')).toHaveTextContent('2');
     });
 
-    expect(mockStorage.saveTournament).toHaveBeenCalledTimes(1);
+    expect(mockStorage.saveTournament).toHaveBeenCalledTimes(1); // Only initial save since schedule generation fails
     expect(mockStorage.saveParticipant).toHaveBeenCalledTimes(2);
   });
 
@@ -250,6 +280,9 @@ describe('TournamentContext', () => {
     // First create a tournament with participants
     mockStorage.saveTournament.mockImplementation(() => {});
     mockStorage.saveParticipant.mockImplementation(() => {});
+    mockStorage.saveTeam.mockImplementation(() => {});
+    mockStorage.saveRound.mockImplementation(() => {});
+    mockStorage.saveMatch.mockImplementation(() => {});
     mockStorage.getStandings.mockReturnValue([]);
 
     render(
@@ -282,6 +315,9 @@ describe('TournamentContext', () => {
     // First create a tournament with participants
     mockStorage.saveTournament.mockImplementation(() => {});
     mockStorage.saveParticipant.mockImplementation(() => {});
+    mockStorage.saveTeam.mockImplementation(() => {});
+    mockStorage.saveRound.mockImplementation(() => {});
+    mockStorage.saveMatch.mockImplementation(() => {});
 
     render(
       <TournamentProvider>
