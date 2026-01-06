@@ -166,7 +166,6 @@ describe('Standings Utilities', () => {
           courtNumber: 1,
           scheduledTime: new Date(),
           status: 'scheduled', // Not completed
-          result: undefined
         }
       ];
 
@@ -310,7 +309,6 @@ describe('Standings Utilities', () => {
         courtNumber: 1,
         scheduledTime: new Date(),
         status: 'scheduled',
-        result: undefined
       };
 
       updateParticipantStatisticsFromMatch(match, teams);
@@ -444,7 +442,6 @@ describe('Standings Utilities', () => {
           courtNumber: 1,
           scheduledTime: new Date(),
           status: 'scheduled',
-          result: undefined
         }
       ];
 

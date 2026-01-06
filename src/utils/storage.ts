@@ -8,7 +8,7 @@ import {
   deserializeRound,
   serializeArray,
   deserializeArray
-} from './index';
+} from './serialization';
 import { performanceMonitor } from './performance';
 
 // Batch operation queue for optimizing multiple storage operations

@@ -96,7 +96,7 @@
   - Optimize UI for tournament director workflow efficiency
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 14. Add data export and import functionality
+- [x] 14. Add data export and import functionality
   - Implement tournament data export as JSON
   - Create tournament backup and restore capabilities
   - Add schedule export for external sharing

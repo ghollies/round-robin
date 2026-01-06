@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import TournamentSetup from './TournamentSetup';
+import TournamentManagement from './TournamentManagement';
 import { PageLoadingState } from './LoadingState';
 import { useNotifications } from './NotificationSystem';
 import { useTournament, useParticipants } from '../hooks';
@@ -87,59 +88,11 @@ export function AppContent() {
 
   if (tournament) {
     return (
-      <>
-        <header className="App-header">
-          <h1>Tournament Created Successfully!</h1>
-          <p>Your tournament is ready to begin</p>
-        </header>
-        <main id="main-content" className="container">
-          <section className="tournament-summary" aria-labelledby="tournament-details">
-            <h2 id="tournament-details">{tournament.name}</h2>
-            <dl>
-              <dt>Mode:</dt>
-              <dd>{tournament.mode}</dd>
-              <dt>Participants:</dt>
-              <dd>{participants.length}</dd>
-              <dt>Courts:</dt>
-              <dd>{tournament.settings.courtCount}</dd>
-              <dt>Match Duration:</dt>
-              <dd>{tournament.settings.matchDuration} minutes</dd>
-            </dl>
-            
-            <div className="participants-list">
-              <h3>Participants:</h3>
-              <ul role="list">
-                {participants.map((participant) => (
-                  <li key={participant.id} role="listitem">{participant.name}</li>
-                ))}
-              </ul>
-            </div>
-          </section>
-          
-          <nav className="tournament-actions" aria-label="Tournament actions">
-            <button
-              onClick={() => setShowDemo(true)}
-              className="btn btn-primary"
-              type="button"
-              aria-describedby="demo-description"
-            >
-              View Feature Demos
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="btn btn-secondary"
-              type="button"
-              aria-describedby="new-tournament-description"
-            >
-              Create New Tournament
-            </button>
-            <div className="sr-only">
-              <div id="demo-description">Explore interactive demonstrations of tournament features</div>
-              <div id="new-tournament-description">Start over and create a new tournament</div>
-            </div>
-          </nav>
-        </main>
-      </>
+      <TournamentManagement
+        tournament={tournament}
+        participants={participants}
+        onBack={() => window.location.reload()}
+      />
     );
   }
 

@@ -1,0 +1,11 @@
+{
+  "short_name": "Pickleball Scheduler",
+  "name": "Pickleball Tournament Scheduler",
+  "description": "Create and manage round-robin doubles pickleball tournaments with individual player signup",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary"
+}

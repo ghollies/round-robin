@@ -1,9 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTournamentContext } from '../contexts/TournamentContext';
 import { Tournament } from '../types/tournament';
 
 /**
- * Custom hook for tournament operations
+ * Simplified hook for tournament operations
  */
 export function useTournament() {
   const {
@@ -16,9 +16,9 @@ export function useTournament() {
     clearError,
   } = useTournamentContext();
 
-  const { currentTournament, loading, error } = state;
+  const { currentTournament, matches, loading, error } = state;
 
-  // Create a new tournament with participants
+  // Create tournament and return ID
   const handleCreateTournament = useCallback(
     async (tournament: Tournament, participantNames: string[]) => {
       await createTournament(tournament, participantNames);
@@ -27,20 +27,8 @@ export function useTournament() {
     [createTournament]
   );
 
-  // Load an existing tournament
-  const handleLoadTournament = useCallback(
-    async (id: string) => {
-      try {
-        await loadTournament(id);
-      } catch (error) {
-        throw error;
-      }
-    },
-    [loadTournament]
-  );
-
   // Update tournament settings
-  const handleUpdateTournament = useCallback(
+  const updateTournament = useCallback(
     async (updates: Partial<Tournament>) => {
       if (!currentTournament) {
         throw new Error('No tournament loaded');
@@ -52,28 +40,19 @@ export function useTournament() {
         updatedAt: new Date(),
       };
 
-      try {
-        await saveTournament(updatedTournament);
-      } catch (error) {
-        throw error;
-      }
+      await saveTournament(updatedTournament);
     },
     [currentTournament, saveTournament]
   );
 
-  // Delete the current tournament
-  const handleDeleteTournament = useCallback(
+  // Delete tournament with fallback to current
+  const deleteTournamentById = useCallback(
     async (id?: string) => {
       const tournamentId = id || currentTournament?.id;
       if (!tournamentId) {
         throw new Error('No tournament to delete');
       }
-
-      try {
-        await deleteTournament(tournamentId);
-      } catch (error) {
-        throw error;
-      }
+      await deleteTournament(tournamentId);
     },
     [currentTournament, deleteTournament]
   );
@@ -86,13 +65,10 @@ export function useTournament() {
     [currentTournament]
   );
 
-  // Get tournament progress information
-  const getTournamentProgress = useCallback(() => {
-    if (!currentTournament) {
-      return null;
-    }
+  // Memoized tournament progress
+  const progress = useMemo(() => {
+    if (!currentTournament || !matches.length) return null;
 
-    const { matches } = state;
     const totalMatches = matches.length;
     const completedMatches = matches.filter(m => m.status === 'completed').length;
     const inProgressMatches = matches.filter(m => m.status === 'in-progress').length;
@@ -104,23 +80,27 @@ export function useTournament() {
       remainingMatches: totalMatches - completedMatches - inProgressMatches,
       completionPercentage: totalMatches > 0 ? (completedMatches / totalMatches) * 100 : 0,
     };
-  }, [currentTournament, state.matches]);
+  }, [currentTournament, matches]);
+
+  // Get tournament progress (for backward compatibility)
+  const getTournamentProgress = useCallback(() => progress, [progress]);
 
   return {
     // State
     tournament: currentTournament,
     loading,
     error,
+    progress,
     
     // Operations
     createTournament: handleCreateTournament,
-    loadTournament: handleLoadTournament,
-    updateTournament: handleUpdateTournament,
-    deleteTournament: handleDeleteTournament,
+    loadTournament,
+    updateTournament,
+    deleteTournament: deleteTournamentById,
     resetTournament,
     clearError,
     
-    // Utilities
+    // Utilities (for backward compatibility)
     isTournamentStatus,
     getTournamentProgress,
   };
