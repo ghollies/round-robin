@@ -15,7 +15,7 @@ export function createDefaultParticipantStatistics() {
 export function createDefaultTournamentSettings() {
   return {
     courtCount: 4,
-    matchDuration: 30,
+    matchDuration: 20,
     pointLimit: 11,
     scoringRule: 'win-by-2' as const,
     timeLimit: true

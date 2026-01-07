@@ -265,6 +265,9 @@ describe('Standings Utilities', () => {
         }
       };
 
+      // Save the match to storage so recalculateAllStatistics can find it
+      saveMatch(match);
+
       updateParticipantStatisticsFromMatch(match, teams);
 
       const standings = getEnhancedStandings(tournament.id);

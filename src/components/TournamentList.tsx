@@ -33,7 +33,7 @@ export const TournamentList: React.FC<TournamentListProps> = ({
   const loadTournamentList = async () => {
     try {
       setLoading(true);
-      const tournamentData = loadTournaments();
+      const tournamentData = loadTournaments() || []; // Handle undefined case
       
       // Enhance tournaments with statistics
       const tournamentsWithStats: TournamentWithStats[] = await Promise.all(

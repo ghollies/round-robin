@@ -16,7 +16,7 @@ This feature will create a web-based application that enables tournament directo
 2. WHEN the director selects pair signup mode THEN the system SHALL validate that the number of teams is between 4-32
 3. WHEN the director selects individual signup mode THEN the system SHALL validate that the number of individual players is between 4-32
 4. WHEN the director enters court information THEN the system SHALL validate that the number of courts is between 1-16
-5. WHEN the director enters match duration THEN the system SHALL validate that duration is between 15-60 minutes
+5. WHEN the director enters match duration THEN the system SHALL validate that duration is between 15-60 minutes with a default of 20 minutes
 6. WHEN the director sets point limits THEN the system SHALL allow configuration of games to a specific point total (e.g., 11, 15, 21 points)
 7. WHEN the director configures scoring rules THEN the system SHALL allow selection between "win-by-2" or "first-to-point-limit" victory conditions
 8. WHEN the director sets both time and point limits THEN the system SHALL allow matches to end by either condition being met first
@@ -30,12 +30,13 @@ This feature will create a web-based application that enables tournament directo
 
 1. WHEN the director selects pair signup mode THEN the system SHALL display input fields for player names based on the configured number of teams
 2. WHEN the director selects individual signup mode THEN the system SHALL display input fields for individual player names
-3. WHEN in pair signup mode THEN the system SHALL require two player names per team for doubles format
-4. WHEN in individual signup mode THEN the system SHALL require one player name per participant
-5. WHEN duplicate player names are entered THEN the system SHALL display an error message and highlight the conflicting entries
-6. WHEN all participant information is complete THEN the system SHALL enable the schedule generation option
-7. WHEN displaying teams in pair signup mode THEN the system SHALL identify teams by their player names (e.g., "Smith/Johnson")
-8. WHEN displaying teams in individual signup mode THEN the system SHALL identify teams by the paired player names for each match
+3. WHEN player input fields are displayed THEN the system SHALL pre-populate each field with default text values in the format "Player 1", "Player 2", "Player 3", etc. that can be submitted as-is or replaced with actual player names
+4. WHEN in pair signup mode THEN the system SHALL require two player names per team for doubles format
+5. WHEN in individual signup mode THEN the system SHALL require one player name per participant
+6. WHEN duplicate player names are entered THEN the system SHALL display an error message and highlight the conflicting entries
+7. WHEN all participant information is complete THEN the system SHALL enable the schedule generation option
+8. WHEN displaying teams in pair signup mode THEN the system SHALL identify teams by their player names (e.g., "Smith/Johnson")
+9. WHEN displaying teams in individual signup mode THEN the system SHALL identify teams by the paired player names for each match
 
 ### Requirement 3
 

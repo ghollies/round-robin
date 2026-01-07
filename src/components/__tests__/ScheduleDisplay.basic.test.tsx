@@ -4,6 +4,8 @@ import '@testing-library/jest-dom';
 import ScheduleDisplay from '../ScheduleDisplay';
 import { GeneratedSchedule, ScheduledMatch } from '../../utils/scheduleGenerator';
 import { Participant } from '../../types/tournament';
+import { TournamentProvider } from '../../contexts/TournamentContext';
+import { NotificationProvider } from '../NotificationSystem';
 
 // Mock the external dependencies
 jest.mock('jspdf', () => jest.fn());
@@ -141,18 +143,29 @@ describe('ScheduleDisplay - Basic Functionality', () => {
     ],
   };
 
+  // Helper function to render with providers
+  const renderWithProviders = (component: React.ReactElement) => {
+    return render(
+      <NotificationProvider>
+        <TournamentProvider>
+          {component}
+        </TournamentProvider>
+      </NotificationProvider>
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('Basic Rendering', () => {
     it('renders schedule display with header', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
       expect(screen.getByText('Tournament Schedule')).toBeInTheDocument();
     });
 
     it('renders schedule statistics', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
       
       expect(screen.getByText('Total Matches:')).toBeInTheDocument();
       expect(screen.getByText('Rounds:')).toBeInTheDocument();
@@ -161,14 +174,14 @@ describe('ScheduleDisplay - Basic Functionality', () => {
     });
 
     it('renders schedule controls with view selector', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
       
       expect(screen.getByLabelText('View:')).toBeInTheDocument();
       expect(screen.getByDisplayValue('By Round')).toBeInTheDocument();
     });
 
     it('renders match information', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
       
       expect(screen.getByText('Match 1')).toBeInTheDocument();
       expect(screen.getByText('Alice Johnson / Bob Smith')).toBeInTheDocument();
@@ -177,7 +190,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
     });
 
     it('renders action buttons', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
       
       expect(screen.getByText('Print Schedule')).toBeInTheDocument();
       expect(screen.getByText('Export as PDF')).toBeInTheDocument();
@@ -187,7 +200,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
 
   describe('View Switching', () => {
     it('switches to by-player view and shows player selector', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
 
       const viewSelect = screen.getByLabelText('View:');
       fireEvent.change(viewSelect, { target: { value: 'by-player' } });
@@ -197,7 +210,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
     });
 
     it('switches to by-court view and shows court selector', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
 
       const viewSelect = screen.getByLabelText('View:');
       fireEvent.change(viewSelect, { target: { value: 'by-court' } });
@@ -208,7 +221,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
 
   describe('Filtering', () => {
     it('filters matches by selected player', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
 
       // Switch to by-player view
       const viewSelect = screen.getByLabelText('View:');
@@ -223,7 +236,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
     });
 
     it('filters matches by selected court', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
 
       // Switch to by-court view
       const viewSelect = screen.getByLabelText('View:');
@@ -244,7 +257,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
         scheduledMatches: [],
       };
 
-      render(<ScheduleDisplay schedule={emptySchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={emptySchedule} participants={mockParticipants} />);
 
       expect(screen.getByText('No matches found for the selected criteria.')).toBeInTheDocument();
     });
@@ -268,7 +281,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
         ],
       };
 
-      render(<ScheduleDisplay schedule={scheduleWithResults} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={scheduleWithResults} participants={mockParticipants} />);
 
       expect(screen.getByText('11 - 8')).toBeInTheDocument();
       expect(screen.getByText('Winner: Alice Johnson / Bob Smith')).toBeInTheDocument();
@@ -308,7 +321,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
         teams: mockSchedule.teams,
       };
 
-      render(<ScheduleDisplay schedule={scheduleWithBye} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={scheduleWithBye} participants={mockParticipants} />);
 
       // Switch to by-round view
       const viewSelect = screen.getByLabelText('View:');
@@ -322,7 +335,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
     });
 
     it('does not display bye section when no bye player exists', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
 
       // Switch to by-round view
       const viewSelect = screen.getByLabelText('View:');
@@ -365,7 +378,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
         teams: mockSchedule.teams,
       };
 
-      render(<ScheduleDisplay schedule={scheduleWithBye} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={scheduleWithBye} participants={mockParticipants} />);
 
       // Default view is by-round - bye SHOULD be shown
       expect(screen.getByText('Bye')).toBeInTheDocument();
@@ -388,7 +401,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
 
   describe('Time Formatting', () => {
     it('formats match times correctly', () => {
-      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+      renderWithProviders(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
 
       // Should display time range (9:00 AM - 9:30 AM for 30-minute match)
       expect(screen.getByText(/9:00 AM - 9:30 AM/)).toBeInTheDocument();

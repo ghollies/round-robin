@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { GeneratedSchedule, ScheduledMatch } from '../utils/scheduleGenerator';
-import { Participant } from '../types/tournament';
+import { Participant, Tournament, Match } from '../types/tournament';
+import { useTournamentContext } from '../contexts/TournamentContext';
+import ScoreEntry from './ScoreEntry';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './ScheduleDisplay.css';
@@ -22,10 +24,12 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
   schedule,
   participants
 }) => {
+  const { state, updateMatchResult } = useTournamentContext();
   const [currentView, setCurrentView] = useState<ScheduleView>('by-round');
   const [selectedCourt, setSelectedCourt] = useState<number | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedMatchForScoring, setSelectedMatchForScoring] = useState<Match | null>(null);
   const scheduleRef = useRef<HTMLDivElement>(null);
 
   // Calculate schedule statistics
@@ -496,6 +500,35 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
     </div>
   );
 
+  // Handle score entry
+  const handleScoreEntry = (match: ScheduledMatch) => {
+    // Convert ScheduledMatch to Match format for ScoreEntry component
+    const matchForScoring: Match = {
+      id: match.id,
+      tournamentId: match.tournamentId,
+      roundNumber: match.roundNumber,
+      matchNumber: match.matchNumber,
+      team1Id: match.team1Id,
+      team2Id: match.team2Id,
+      courtNumber: match.courtNumber,
+      scheduledTime: match.scheduledTime,
+      status: match.status,
+      ...(match.result && { result: match.result })
+    };
+    setSelectedMatchForScoring(matchForScoring);
+  };
+
+  const handleMatchUpdate = async (updatedMatch: Match) => {
+    try {
+      if (updatedMatch.result) {
+        await updateMatchResult(updatedMatch.id, updatedMatch.result);
+      }
+      setSelectedMatchForScoring(null);
+    } catch (error) {
+      console.error('Failed to update match result:', error);
+    }
+  };
+
   const renderMatchCard = (match: ScheduledMatch) => (
     <div key={match.id} className="match-card">
       <div className="match-header">
@@ -531,19 +564,38 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
         </div>
       </div>
 
-      {match.result && (
-        <div className="match-result">
-          <div className="score">
-            {match.result.team1Score} - {match.result.team2Score}
+      <div className="match-score-section">
+        {match.result ? (
+          <div className="match-result">
+            <div className="score-display">
+              <span className="score">{match.result.team1Score} - {match.result.team2Score}</span>
+              <span className="end-reason">({match.result.endReason === 'points' ? 'Points' : 'Time'})</span>
+            </div>
+            <div className="winner">
+              Winner: {match.result.winnerId === match.team1Id ? 
+                getTeamName(match, 'team1') : 
+                getTeamName(match, 'team2')
+              }
+            </div>
+            <button 
+              className="btn-small btn-outline edit-score-btn"
+              onClick={() => handleScoreEntry(match)}
+            >
+              Edit Score
+            </button>
           </div>
-          <div className="winner">
-            Winner: {match.result.winnerId === match.team1Id ? 
-              getTeamName(match, 'team1') : 
-              getTeamName(match, 'team2')
-            }
+        ) : (
+          <div className="no-result">
+            <span className="pending-text">Score pending</span>
+            <button 
+              className="btn-small btn-primary enter-score-btn"
+              onClick={() => handleScoreEntry(match)}
+            >
+              Enter Score
+            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 
@@ -649,6 +701,16 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Score Entry Modal */}
+      {selectedMatchForScoring && state.currentTournament && (
+        <ScoreEntry
+          match={selectedMatchForScoring}
+          tournament={state.currentTournament}
+          onMatchUpdate={handleMatchUpdate}
+          onClose={() => setSelectedMatchForScoring(null)}
+        />
+      )}
     </div>
   );
 };

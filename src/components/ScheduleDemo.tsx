@@ -17,7 +17,7 @@ const ScheduleDemo: React.FC = () => {
       // Create a demo tournament
       const tournament = createTournament('Demo Tournament', 'individual-signup', {
         courtCount: 2,
-        matchDuration: 30,
+        matchDuration: 20,
         pointLimit: 11,
         scoringRule: 'win-by-2',
         timeLimit: true
@@ -105,7 +105,7 @@ const ScheduleDemo: React.FC = () => {
         lineHeight: '1.6'
       }}>
         This demo shows the schedule generation and optimization features for a 6-player 
-        individual signup tournament with 2 courts and 30-minute matches.
+        individual signup tournament with 2 courts and 20-minute matches.
       </p>
 
       <div style={{
@@ -131,7 +131,7 @@ const ScheduleDemo: React.FC = () => {
             <strong>Courts:</strong> 2 courts
           </div>
           <div>
-            <strong>Match Duration:</strong> 30 minutes<br/>
+            <strong>Match Duration:</strong> 20 minutes<br/>
             <strong>Rest Period:</strong> 15 minutes<br/>
             <strong>Point Limit:</strong> 11 points
           </div>

@@ -144,6 +144,45 @@ describe('TournamentSetup Component', () => {
   });
 
   describe('Participant Entry', () => {
+    it('pre-populates participant input fields with default text values', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      // Check that input fields are pre-populated with default values
+      expect(screen.getByDisplayValue('Player 1')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Player 2')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Player 3')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Player 4')).toBeInTheDocument();
+    });
+
+    it('allows submitting tournament with default player names', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      // Submit without changing the pre-populated values
+      const createButton = screen.getByRole('button', { name: /create tournament/i });
+      await user.click(createButton);
+      
+      expect(mockOnTournamentCreate).toHaveBeenCalledWith(
+        expect.anything(),
+        ['Player 1', 'Player 2', 'Player 3', 'Player 4']
+      );
+    });
+
     it('shows participant entry form after valid tournament setup', async () => {
       const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
@@ -186,6 +225,12 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
+      // Clear the pre-populated values to test validation
+      const playerInputs = screen.getAllByLabelText(/player \d+/i);
+      for (const input of playerInputs) {
+        await user.clear(input);
+      }
+      
       const createButton = screen.getByRole('button', { name: /create tournament/i });
       await user.click(createButton);
       
@@ -204,9 +249,14 @@ describe('TournamentSetup Component', () => {
       await user.click(nextButton);
       
       const playerInputs = screen.getAllByLabelText(/player \d+/i);
+      // Clear pre-populated values and enter new ones
+      await user.clear(playerInputs[0]);
       await user.type(playerInputs[0], 'John Doe');
+      await user.clear(playerInputs[1]);
       await user.type(playerInputs[1], 'Jane Smith');
+      await user.clear(playerInputs[2]);
       await user.type(playerInputs[2], 'john doe'); // Case insensitive duplicate
+      await user.clear(playerInputs[3]);
       await user.type(playerInputs[3], 'Bob Johnson');
       
       const createButton = screen.getByRole('button', { name: /create tournament/i });
@@ -244,12 +294,17 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
+      // Clear the pre-populated values to test validation
+      const playerInputs = screen.getAllByLabelText(/player \d+/i);
+      for (const input of playerInputs) {
+        await user.clear(input);
+      }
+      
       const createButton = screen.getByRole('button', { name: /create tournament/i });
       await user.click(createButton);
       
       expect(screen.getAllByText(/name is required/i)).toHaveLength(4);
       
-      const playerInputs = screen.getAllByLabelText(/player \d+/i);
       await user.type(playerInputs[0], 'John Doe');
       
       // Error should be cleared for the first input
@@ -279,11 +334,15 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
-      // Fill participant names
+      // Fill participant names - clear pre-populated values first
       const playerInputs = screen.getAllByLabelText(/player \d+/i);
+      await user.clear(playerInputs[0]);
       await user.type(playerInputs[0], 'John Doe');
+      await user.clear(playerInputs[1]);
       await user.type(playerInputs[1], 'Jane Smith');
+      await user.clear(playerInputs[2]);
       await user.type(playerInputs[2], 'Bob Johnson');
+      await user.clear(playerInputs[3]);
       await user.type(playerInputs[3], 'Alice Brown');
       
       const createButton = screen.getByRole('button', { name: /create tournament/i });
@@ -319,9 +378,14 @@ describe('TournamentSetup Component', () => {
       await user.click(nextButton);
       
       const teamInputs = screen.getAllByLabelText(/team \d+/i);
+      // Clear pre-populated values and enter new ones
+      await user.clear(teamInputs[0]);
       await user.type(teamInputs[0], 'Smith/Johnson');
+      await user.clear(teamInputs[1]);
       await user.type(teamInputs[1], 'Brown/Davis');
+      await user.clear(teamInputs[2]);
       await user.type(teamInputs[2], 'Wilson/Miller');
+      await user.clear(teamInputs[3]);
       await user.type(teamInputs[3], 'Taylor/Anderson');
       
       const createButton = screen.getByRole('button', { name: /create tournament/i });
@@ -351,9 +415,14 @@ describe('TournamentSetup Component', () => {
       await user.click(nextButton);
       
       const playerInputs = screen.getAllByLabelText(/player \d+/i);
+      // Clear pre-populated values and enter new ones with whitespace
+      await user.clear(playerInputs[0]);
       await user.type(playerInputs[0], '  John Doe  ');
+      await user.clear(playerInputs[1]);
       await user.type(playerInputs[1], ' Jane Smith ');
+      await user.clear(playerInputs[2]);
       await user.type(playerInputs[2], 'Bob Johnson');
+      await user.clear(playerInputs[3]);
       await user.type(playerInputs[3], '  Alice Brown');
       
       const createButton = screen.getByRole('button', { name: /create tournament/i });

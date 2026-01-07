@@ -394,7 +394,16 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
           
           // Refresh standings if tournament is loaded
           if (state.currentTournament) {
-            const standings = storage.getStandings(state.currentTournament.id);
+            // Use the enhanced standings calculation that handles caching and recalculation
+            const { getEnhancedStandings } = await import('../utils/standings');
+            const enhancedStandings = getEnhancedStandings(state.currentTournament.id);
+            // Convert enhanced standings back to basic participants for compatibility
+            const standings = enhancedStandings.map(standing => ({
+              id: standing.id,
+              tournamentId: standing.tournamentId,
+              name: standing.name,
+              statistics: standing.statistics
+            }));
             dispatch({ type: 'SET_STANDINGS', payload: standings });
           }
         },

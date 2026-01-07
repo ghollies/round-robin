@@ -226,38 +226,12 @@ export function updateParticipantStatisticsFromMatch(
 ): void {
   if (match.status !== 'completed' || !match.result) return;
 
-  const team1 = teams.find(t => t.id === match.team1Id);
-  const team2 = teams.find(t => t.id === match.team2Id);
-
-  if (!team1 || !team2) return;
-
   // Clear cache for this tournament since statistics will change
   clearTournamentCache(match.tournamentId);
 
-  // Get all participants involved in the match
-  const participantIds = [team1.player1Id, team1.player2Id, team2.player1Id, team2.player2Id];
-  const participants = loadParticipantsByTournament(match.tournamentId);
-  
-  participantIds.forEach(participantId => {
-    const participant = participants.find(p => p.id === participantId);
-    if (!participant) return;
-
-    const isOnTeam1 = team1.player1Id === participantId || team1.player2Id === participantId;
-    const isWinner = match.result!.winnerId === (isOnTeam1 ? match.team1Id : match.team2Id);
-    
-    const pointsScored = isOnTeam1 ? match.result!.team1Score : match.result!.team2Score;
-    const pointsAllowed = isOnTeam1 ? match.result!.team2Score : match.result!.team1Score;
-
-    // Update statistics
-    participant.statistics.gamesWon += isWinner ? 1 : 0;
-    participant.statistics.gamesLost += isWinner ? 0 : 1;
-    participant.statistics.totalPointsScored += pointsScored;
-    participant.statistics.totalPointsAllowed += pointsAllowed;
-    participant.statistics.pointDifferential = 
-      participant.statistics.totalPointsScored - participant.statistics.totalPointsAllowed;
-
-    saveParticipant(participant);
-  });
+  // Instead of trying to track incremental changes, recalculate all statistics
+  // This ensures accuracy when match results are edited/updated
+  recalculateAllStatistics(match.tournamentId);
 }
 
 // Get tournament winner(s)

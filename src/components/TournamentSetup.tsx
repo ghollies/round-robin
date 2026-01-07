@@ -41,7 +41,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
     mode: 'individual-signup',
     participantCount: 8,
     courtCount: 2,
-    matchDuration: 30,
+    matchDuration: 20,
     pointLimit: 11,
     scoringRule: 'win-by-2',
     timeLimit: true,
@@ -170,18 +170,14 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
 
   const handleNext = useCallback(() => {
     if (validateForm()) {
-      // Initialize participants array with default names
-      const initialParticipants = Array(formData.participantCount).fill('').map((_, index) => {
-        if (formData.mode === 'pair-signup') {
-          return `Team ${index + 1}`;
-        } else {
-          return `Player ${index + 1}`;
-        }
-      });
+      // Initialize participants array with default text values
+      const initialParticipants = Array(formData.participantCount)
+        .fill('')
+        .map((_, index) => `Player ${index + 1}`);
       setParticipants(initialParticipants);
       setShowParticipantEntry(true);
     }
-  }, [validateForm, formData.participantCount, formData.mode]);
+  }, [validateForm, formData.participantCount]);
 
   const handleBack = useCallback(() => {
     setShowParticipantEntry(false);
@@ -269,6 +265,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
           id={`participant_${index}`}
           value={name}
           onChange={(e) => handleParticipantChange(index, e.target.value)}
+          placeholder={formData.mode === 'pair-signup' ? 'Smith/Johnson' : 'Player name'}
           className={errors[`participant_${index}`] ? 'error' : ''}
         />
         {errors[`participant_${index}`] && (

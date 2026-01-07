@@ -22,7 +22,7 @@
   - Write unit tests for all storage operations
   - _Requirements: 1.8, 8.3_
 
-- [x] 4. Build tournament setup and player entry components with automatic schedule generation
+- [ ] 4. Build tournament setup and player entry components with automatic schedule generation
   - Create tournament configuration form with validation
   - Implement player entry interface with duplicate detection
   - Add form validation for all tournament parameters
@@ -148,3 +148,12 @@
   - Add search and filter functionality for tournament list
   - Create responsive design for tournament cards/list view
   - _Requirements: 1.1, 6.1, 8.6_
+
+- [x] 19. Fix score editing to update rather than add duplicate statistics
+  - Modify updateParticipantStatisticsFromMatch to handle match result updates properly
+  - Implement logic to detect when a match already has results and subtract old statistics
+  - Add recalculateAllStatistics call when match results are updated to ensure accuracy
+  - Update ScoreEntry component to use proper statistics update flow
+  - Add unit tests to verify statistics are correctly updated when scores are edited
+  - Ensure standings display reflects accurate statistics after score edits
+  - _Requirements: 8.3, 8.4, 8.5, 8.6_
