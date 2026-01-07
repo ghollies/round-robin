@@ -15,7 +15,7 @@ interface TournamentManagementProps {
   onBack: () => void;
 }
 
-type ManagementView = 'overview' | 'schedule' | 'manage' | 'scoring' | 'standings';
+type ManagementView = 'overview' | 'schedule' | 'manage' | 'standings';
 
 export const TournamentManagement: React.FC<TournamentManagementProps> = ({
   tournament,
@@ -143,13 +143,6 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
           disabled={!schedule}
         >
           Manage
-        </button>
-        <button
-          onClick={() => setCurrentView('scoring')}
-          className={`nav-btn ${currentView === 'scoring' ? 'active' : ''}`}
-          disabled={!schedule}
-        >
-          Scoring
         </button>
         <button
           onClick={() => setCurrentView('standings')}
@@ -313,15 +306,6 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
         ) : (
           <div className="no-schedule">
             <p>No schedule generated yet. Go to Overview to generate one.</p>
-          </div>
-        );
-      
-      case 'scoring':
-        return (
-          <div className="scoring-section">
-            <h2>Score Entry</h2>
-            <p>Select a match from the schedule to enter scores.</p>
-            {/* TODO: Integrate with match selection from schedule */}
           </div>
         );
       
