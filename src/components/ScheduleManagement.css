@@ -493,7 +493,359 @@
   z-index: 999;
 }
 
-/* Responsive Design */
+/* Rounds View */
+.rounds-view {
+  padding: 20px 0;
+}
+
+.rounds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.rounds-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.4rem;
+}
+
+.round-swap-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.round-swap-controls button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.round-swap-info {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.info-panel {
+  padding: 20px;
+}
+
+.info-panel h4 {
+  margin: 0 0 10px 0;
+  color: #1976d2;
+  font-size: 1.1rem;
+}
+
+.info-panel p {
+  margin: 0 0 15px 0;
+  color: #424242;
+  line-height: 1.5;
+}
+
+.swap-rules {
+  margin-top: 15px;
+}
+
+.swap-rules h5 {
+  margin: 0 0 8px 0;
+  color: #1976d2;
+  font-size: 1rem;
+}
+
+.swap-rules ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #424242;
+}
+
+.swap-rules li {
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+.warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 15px;
+  color: #856404;
+}
+
+.rounds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+/* Round Cards */
+.round-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.round-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.round-card.selected {
+  border-color: #007bff;
+  background: #e3f2fd;
+}
+
+.round-card.completed {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.round-card.completed:hover {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.round-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.round-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+}
+
+.round-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.completed {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.bye-indicator {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.round-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.stat {
+  text-align: center;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.round-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.round-match-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  border-left: 3px solid #dee2e6;
+}
+
+.match-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.match-teams {
+  margin-top: 4px;
+}
+
+.team-pairing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  width: 100%;
+}
+
+.team-name {
+  background: #e9ecef;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #495057;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  max-width: calc(50% - 15px);
+  border: 1px solid #dee2e6;
+  text-align: center;
+}
+
+.vs-separator {
+  color: #6c757d;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.round-match-summary .match-time {
+  color: #495057;
+  font-weight: 500;
+}
+
+.round-match-summary .match-court {
+  color: #6c757d;
+  text-align: center;
+}
+
+.round-match-summary .match-status {
+  text-transform: capitalize;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.round-match-summary .match-status.scheduled {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.round-match-summary .match-status.in-progress {
+  background: #d4edda;
+  color: #155724;
+}
+
+.round-match-summary .match-status.completed {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.more-matches {
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+/* Responsive adjustments for rounds view */
+@media (max-width: 768px) {
+  .rounds-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rounds-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .round-swap-controls {
+    justify-content: center;
+  }
+
+  .round-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .round-match-summary {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    text-align: center;
+  }
+}
 @media (max-width: 768px) {
   .schedule-management {
     padding: 10px;

@@ -49,8 +49,9 @@ The application is a client-side only web application using local browser storag
 - **Purpose**: Real-time schedule modifications during tournament
 - **Key Features**:
   - Drag-and-drop match rescheduling
-  - Court reassignment with conflict detection
   - Round order swapping for incomplete rounds
+  - Round swapping for player accommodation (late arrivals, bye timing)
+  - Conflict detection and validation
   - Change history logging
 
 #### 4. Score Entry Component
@@ -83,6 +84,8 @@ The application is a client-side only web application using local browser storag
 - `updateMatch(matchId: string, result: MatchResult)` - Update match results
 - `getStandings(tournamentId: string)` - Calculate current standings
 - `exportTournament(tournamentId: string)` - Export tournament data as JSON
+- `swapRounds(tournamentId: string, round1: number, round2: number)` - Swap two incomplete rounds
+- `validateRoundSwap(round1: Round, round2: Round)` - Validate round swap compatibility
 
 ## Data Models
 
@@ -191,6 +194,36 @@ For n players, the total number of unique partnerships is C(n,2) = n(n-1)/2. Sin
 2. **Time Slot Calculation**: Based on match duration and court availability
 3. **Rest Period Management**: Ensure minimum rest between consecutive matches for same players
 4. **Bye Distribution**: For odd participant counts, distribute byes fairly
+
+### Round Swapping Algorithm
+
+The round swapping functionality allows tournament directors to reorder incomplete rounds to accommodate late players or specific bye timing requirements:
+
+#### Core Swapping Requirements
+- Only incomplete rounds (status: 'pending' or 'active' with no completed matches) can be swapped
+- Both rounds must contain the same set of teams to maintain tournament integrity
+- Match pairings within rounds remain unchanged during swaps
+- Time slots are recalculated based on new round order
+- Court assignments are preserved where possible
+
+#### Validation Logic
+1. **Round Status Check**: Verify both rounds are incomplete
+2. **Team Consistency**: Ensure both rounds involve the same participants
+3. **Match Pairing Preservation**: Validate that swapping maintains fair pairings
+4. **Conflict Detection**: Check for scheduling conflicts after swap
+5. **Bye Compatibility**: For odd player counts, ensure bye assignments remain valid
+
+#### Implementation Strategy
+1. **Pre-swap Validation**: Run comprehensive checks before allowing swap
+2. **Atomic Operation**: Ensure swap completes fully or rolls back entirely
+3. **Time Recalculation**: Update all match times based on new round order
+4. **State Synchronization**: Update tournament state and persist changes
+5. **Conflict Resolution**: Provide suggestions if conflicts arise
+
+#### Use Cases
+- **Late Player Accommodation**: Move a player's bye round to accommodate late arrival
+- **Scheduling Flexibility**: Adjust round order for facility or timing constraints
+- **Player Requests**: Handle specific timing needs for individual participants
 
 ## Error Handling
 

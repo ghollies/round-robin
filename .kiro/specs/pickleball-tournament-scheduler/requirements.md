@@ -89,17 +89,21 @@ This feature will create a web-based application that enables tournament directo
 
 ### Requirement 7
 
-**User Story:** As a tournament director, I want to make real-time adjustments to the schedule during the tournament, so that I can handle delays, court changes, or other unexpected situations.
+**User Story:** As a tournament director, I want to make real-time adjustments to the schedule during the tournament, so that I can handle delays, round changes, or other unexpected situations.
 
 #### Acceptance Criteria
 
-1. WHEN the director selects a match THEN the system SHALL allow modification of court assignment and time slot
+1. WHEN the director selects a match THEN the system SHALL allow modification of time slot
 2. WHEN a match time is changed THEN the system SHALL automatically check for conflicts with other scheduled matches
-3. WHEN court assignments are modified THEN the system SHALL ensure no double-booking of courts occurs
-4. WHEN the director selects two incomplete rounds THEN the system SHALL allow swapping the order of those rounds
-5. WHEN rounds are swapped THEN the system SHALL update all associated match times and maintain court assignments appropriately
-6. IF a schedule change creates conflicts THEN the system SHALL highlight the conflicts and suggest alternative arrangements
-7. WHEN changes are made THEN the system SHALL update the display immediately and maintain a log of all modifications
+3. WHEN the director selects two incomplete rounds THEN the system SHALL allow swapping the order of those rounds
+4. WHEN rounds are swapped THEN the system SHALL update all associated match times appropriately
+5. WHEN the director needs to accommodate a late player or specific bye timing THEN the system SHALL provide an option to swap one round with another round
+6. WHEN swapping rounds for player accommodation THEN the system SHALL ensure the swap only affects incomplete rounds and maintains tournament integrity
+7. WHEN a round swap is requested THEN the system SHALL validate that both rounds contain the same teams and preserve match pairings
+8. IF a schedule change creates conflicts THEN the system SHALL highlight the conflicts and suggest alternative arrangements
+9. WHEN changes are made THEN the system SHALL update the display immediately and maintain a log of all modifications
+10. WHEN viewing round boxes for round swapping THEN the system SHALL display the names of players on each team in a compact format within each round box
+11. WHEN displaying player names in round boxes THEN the system SHALL show team pairings clearly with abbreviated names if necessary to maintain readability
 
 ### Requirement 8
 

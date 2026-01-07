@@ -283,6 +283,8 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
               return matchData;
             })}
             rounds={schedule.rounds}
+            teams={schedule.teams}
+            participants={participants}
             courtCount={tournament.settings.courtCount}
             matchDuration={tournament.settings.matchDuration}
             onMatchesUpdate={(matches) => {

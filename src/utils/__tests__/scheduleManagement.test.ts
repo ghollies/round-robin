@@ -302,7 +302,7 @@ describe('ScheduleManipulator', () => {
 
     expect(() => {
       ScheduleManipulator.swapRounds(round1, round2, [], changeHistory);
-    }).toThrow('Cannot swap completed rounds');
+    }).toThrow('Cannot swap rounds: Round 1 is already completed and cannot be swapped');
   });
 
   test('should undo match reschedule', () => {

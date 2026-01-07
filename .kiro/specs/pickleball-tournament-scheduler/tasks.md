@@ -62,6 +62,16 @@
   - Add visual conflict indicators and resolution suggestions
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
+- [x] 8.1 Implement round swapping functionality for player accommodation
+  - Add round swap validation logic to ensure only incomplete rounds can be swapped
+  - Create validateRoundSwap function to check team consistency between rounds
+  - Implement swapRounds function with atomic operation guarantees
+  - Add UI controls for selecting and swapping rounds in schedule management
+  - Create conflict detection and resolution for round swaps
+  - Add time slot recalculation after round swaps
+  - Write unit tests for round swap validation and execution
+  - _Requirements: 7.5, 7.6, 7.7, 7.8, 7.9_
+
 - [x] 9. Build score entry and match result tracking
   - Create score input interface with validation against tournament rules
   - Implement win condition checking for both time and point limits
@@ -157,3 +167,13 @@
   - Add unit tests to verify statistics are correctly updated when scores are edited
   - Ensure standings display reflects accurate statistics after score edits
   - _Requirements: 8.3, 8.4, 8.5, 8.6_
+
+- [x] 20. Enhance round swap UI to display player names in round boxes
+  - Add helper function to get participant names from team IDs in matches
+  - Update round card rendering to display team player names in compact format
+  - Implement name abbreviation logic for long names to maintain readability
+  - Add team pairing display showing "Player1/Player2" format for each match
+  - Update CSS styling to accommodate player names while keeping compact layout
+  - Ensure player names are clearly visible but don't overwhelm the round box design
+  - Test with various name lengths and tournament sizes to ensure proper display
+  - _Requirements: 7.10, 7.11_

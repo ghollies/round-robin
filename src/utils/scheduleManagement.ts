@@ -269,25 +269,103 @@ export class ScheduleManipulator {
     };
   }
 
+  static validateRoundSwap(round1: Round, round2: Round, matches: Match[]): {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  } {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Check if trying to swap the same round
+    if (round1.id === round2.id) {
+      errors.push('Cannot swap a round with itself');
+    }
+
+    // Check if rounds are incomplete
+    if (round1.status === 'completed') {
+      errors.push(`Round ${round1.roundNumber} is already completed and cannot be swapped`);
+    }
+    if (round2.status === 'completed') {
+      errors.push(`Round ${round2.roundNumber} is already completed and cannot be swapped`);
+    }
+
+    // Check if any matches in the rounds are completed
+    const round1Matches = matches.filter(m => m.roundNumber === round1.roundNumber);
+    const round2Matches = matches.filter(m => m.roundNumber === round2.roundNumber);
+
+    const round1CompletedMatches = round1Matches.filter(m => m.status === 'completed');
+    const round2CompletedMatches = round2Matches.filter(m => m.status === 'completed');
+
+    if (round1CompletedMatches.length > 0) {
+      errors.push(`Round ${round1.roundNumber} has ${round1CompletedMatches.length} completed matches and cannot be swapped`);
+    }
+    if (round2CompletedMatches.length > 0) {
+      errors.push(`Round ${round2.roundNumber} has ${round2CompletedMatches.length} completed matches and cannot be swapped`);
+    }
+
+    // Check team consistency - both rounds should involve the same set of teams
+    const round1Teams = new Set([
+      ...round1Matches.map(m => m.team1Id),
+      ...round1Matches.map(m => m.team2Id)
+    ]);
+    const round2Teams = new Set([
+      ...round2Matches.map(m => m.team1Id),
+      ...round2Matches.map(m => m.team2Id)
+    ]);
+
+    // For individual signup tournaments, team consistency is more complex
+    // We need to ensure the swap maintains the partnership rotation integrity
+    if (round1Teams.size !== round2Teams.size) {
+      warnings.push(`Rounds have different numbers of participating teams (${round1Teams.size} vs ${round2Teams.size})`);
+    }
+
+    // Check for bye consistency
+    if (round1.byeTeamId && !round2.byeTeamId) {
+      warnings.push(`Round ${round1.roundNumber} has a bye but Round ${round2.roundNumber} does not`);
+    }
+    if (!round1.byeTeamId && round2.byeTeamId) {
+      warnings.push(`Round ${round2.roundNumber} has a bye but Round ${round1.roundNumber} does not`);
+    }
+
+    // Check if rounds are adjacent (swapping adjacent rounds is generally safer)
+    const roundDifference = Math.abs(round1.roundNumber - round2.roundNumber);
+    if (roundDifference > 2) {
+      warnings.push(`Swapping non-adjacent rounds (${roundDifference} rounds apart) may affect tournament flow`);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
+
   static swapRounds(
     round1: Round,
     round2: Round,
     matches: Match[],
-    changeHistory: ScheduleChangeHistory
+    changeHistory: ScheduleChangeHistory,
+    matchDuration: number = 20
   ): { updatedRounds: Round[], updatedMatches: Match[] } {
-    // Only allow swapping of incomplete rounds
-    if (round1.status === 'completed' || round2.status === 'completed') {
-      throw new Error('Cannot swap completed rounds');
+    // Validate the swap first
+    const validation = this.validateRoundSwap(round1, round2, matches);
+    if (!validation.isValid) {
+      throw new Error(`Cannot swap rounds: ${validation.errors.join(', ')}`);
     }
 
     const oldValue = {
       round1Number: round1.roundNumber,
-      round2Number: round2.roundNumber
+      round2Number: round2.roundNumber,
+      round1Id: round1.id,
+      round2Id: round2.id
     };
 
     const newValue = {
       round1Number: round2.roundNumber,
-      round2Number: round1.roundNumber
+      round2Number: round1.roundNumber,
+      round1Id: round1.id,
+      round2Id: round2.id
     };
 
     // Record the change
@@ -303,12 +381,27 @@ export class ScheduleManipulator {
     const updatedRound1 = { ...round1, roundNumber: round2.roundNumber };
     const updatedRound2 = { ...round2, roundNumber: round1.roundNumber };
 
-    // Update match round numbers
+    // Get all matches for both rounds
+    const round1Matches = matches.filter(m => m.roundNumber === round1.roundNumber);
+    const round2Matches = matches.filter(m => m.roundNumber === round2.roundNumber);
+
+    // Recalculate time slots based on new round order
+    const { updatedRound1Matches, updatedRound2Matches } = this.recalculateTimeSlots(
+      round1Matches,
+      round2Matches,
+      round2.roundNumber, // round1 is taking round2's position
+      round1.roundNumber, // round2 is taking round1's position
+      matchDuration
+    );
+
+    // Update all matches with new round numbers and times
     const updatedMatches = matches.map(match => {
       if (match.roundNumber === round1.roundNumber) {
-        return { ...match, roundNumber: round2.roundNumber };
+        const updatedMatch = updatedRound1Matches.find(m => m.id === match.id);
+        return updatedMatch || { ...match, roundNumber: round2.roundNumber };
       } else if (match.roundNumber === round2.roundNumber) {
-        return { ...match, roundNumber: round1.roundNumber };
+        const updatedMatch = updatedRound2Matches.find(m => m.id === match.id);
+        return updatedMatch || { ...match, roundNumber: round1.roundNumber };
       }
       return match;
     });
@@ -317,6 +410,185 @@ export class ScheduleManipulator {
       updatedRounds: [updatedRound1, updatedRound2],
       updatedMatches
     };
+  }
+
+  static swapRoundsWithCourtRebalancing(
+    round1: Round,
+    round2: Round,
+    matches: Match[],
+    changeHistory: ScheduleChangeHistory,
+    matchDuration: number = 20,
+    courtCount: number
+  ): { updatedRounds: Round[], updatedMatches: Match[] } {
+    // Validate the swap first
+    const validation = this.validateRoundSwap(round1, round2, matches);
+    if (!validation.isValid) {
+      throw new Error(`Cannot swap rounds: ${validation.errors.join(', ')}`);
+    }
+
+    const oldValue = {
+      round1Number: round1.roundNumber,
+      round2Number: round2.roundNumber,
+      round1Id: round1.id,
+      round2Id: round2.id
+    };
+
+    const newValue = {
+      round1Number: round2.roundNumber,
+      round2Number: round1.roundNumber,
+      round1Id: round1.id,
+      round2Id: round2.id
+    };
+
+    // Record the change
+    changeHistory.addChange({
+      type: 'round-swap',
+      description: `Swapped Round ${round1.roundNumber} with Round ${round2.roundNumber} with court rebalancing`,
+      oldValue,
+      newValue,
+      roundId: round1.id
+    });
+
+    // Update round numbers
+    const updatedRound1 = { ...round1, roundNumber: round2.roundNumber };
+    const updatedRound2 = { ...round2, roundNumber: round1.roundNumber };
+
+    // Get all matches for both rounds
+    const round1Matches = matches.filter(m => m.roundNumber === round1.roundNumber);
+    const round2Matches = matches.filter(m => m.roundNumber === round2.roundNumber);
+
+    // Recalculate time slots and rebalance courts
+    const { updatedRound1Matches, updatedRound2Matches } = this.recalculateTimeSlotsWithCourtRebalancing(
+      round1Matches,
+      round2Matches,
+      round2.roundNumber, // round1 is taking round2's position
+      round1.roundNumber, // round2 is taking round1's position
+      matchDuration,
+      courtCount
+    );
+
+    // Update all matches with new round numbers, times, and court assignments
+    const updatedMatches = matches.map(match => {
+      if (match.roundNumber === round1.roundNumber) {
+        const updatedMatch = updatedRound1Matches.find(m => m.id === match.id);
+        return updatedMatch || { ...match, roundNumber: round2.roundNumber };
+      } else if (match.roundNumber === round2.roundNumber) {
+        const updatedMatch = updatedRound2Matches.find(m => m.id === match.id);
+        return updatedMatch || { ...match, roundNumber: round1.roundNumber };
+      }
+      return match;
+    });
+
+    return {
+      updatedRounds: [updatedRound1, updatedRound2],
+      updatedMatches
+    };
+  }
+
+  private static recalculateTimeSlotsWithCourtRebalancing(
+    round1Matches: Match[],
+    round2Matches: Match[],
+    newRound1Number: number,
+    newRound2Number: number,
+    matchDuration: number,
+    courtCount: number
+  ): { updatedRound1Matches: Match[], updatedRound2Matches: Match[] } {
+    // Calculate base time for each round based on round number
+    const baseTime = new Date();
+    baseTime.setHours(9, 0, 0, 0); // Start at 9 AM
+
+    const round1BaseTime = new Date(baseTime.getTime() + (newRound1Number - 1) * matchDuration * 60000);
+    const round2BaseTime = new Date(baseTime.getTime() + (newRound2Number - 1) * matchDuration * 60000);
+
+    // Rebalance courts for round 1 matches
+    const updatedRound1Matches = this.rebalanceMatchesAcrossCourts(
+      round1Matches,
+      newRound1Number,
+      round1BaseTime,
+      courtCount,
+      matchDuration
+    );
+
+    // Rebalance courts for round 2 matches
+    const updatedRound2Matches = this.rebalanceMatchesAcrossCourts(
+      round2Matches,
+      newRound2Number,
+      round2BaseTime,
+      courtCount,
+      matchDuration
+    );
+
+    return { updatedRound1Matches, updatedRound2Matches };
+  }
+
+  private static rebalanceMatchesAcrossCourts(
+    matches: Match[],
+    roundNumber: number,
+    baseTime: Date,
+    courtCount: number,
+    matchDuration: number
+  ): Match[] {
+    if (matches.length === 0) return [];
+
+    // Sort matches by their original match number to maintain consistency
+    const sortedMatches = [...matches].sort((a, b) => a.matchNumber - b.matchNumber);
+    
+    // Calculate how many matches can run simultaneously (one per court)
+    const matchesPerTimeSlot = Math.min(courtCount, sortedMatches.length);
+    
+    // Calculate number of time slots needed
+    const timeSlots = Math.ceil(sortedMatches.length / matchesPerTimeSlot);
+    
+    return sortedMatches.map((match, index) => {
+      // Determine which time slot this match belongs to
+      const timeSlotIndex = Math.floor(index / matchesPerTimeSlot);
+      
+      // Determine which court within that time slot
+      const courtIndex = index % matchesPerTimeSlot;
+      const courtNumber = courtIndex + 1;
+      
+      // Calculate the scheduled time for this time slot
+      const scheduledTime = new Date(baseTime.getTime() + timeSlotIndex * matchDuration * 60000);
+      
+      return {
+        ...match,
+        roundNumber,
+        courtNumber,
+        scheduledTime
+      };
+    });
+  }
+
+  private static recalculateTimeSlots(
+    round1Matches: Match[],
+    round2Matches: Match[],
+    newRound1Number: number,
+    newRound2Number: number,
+    matchDuration: number
+  ): { updatedRound1Matches: Match[], updatedRound2Matches: Match[] } {
+    // Calculate base time for each round based on round number
+    // Assuming rounds start at specific intervals
+    const baseTime = new Date();
+    baseTime.setHours(9, 0, 0, 0); // Start at 9 AM
+
+    const round1BaseTime = new Date(baseTime.getTime() + (newRound1Number - 1) * matchDuration * 60000);
+    const round2BaseTime = new Date(baseTime.getTime() + (newRound2Number - 1) * matchDuration * 60000);
+
+    // Update round 1 matches with new times and round number
+    const updatedRound1Matches = round1Matches.map((match, index) => ({
+      ...match,
+      roundNumber: newRound1Number,
+      scheduledTime: new Date(round1BaseTime.getTime() + (index * 2 * 60000)) // 2-minute stagger
+    }));
+
+    // Update round 2 matches with new times and round number
+    const updatedRound2Matches = round2Matches.map((match, index) => ({
+      ...match,
+      roundNumber: newRound2Number,
+      scheduledTime: new Date(round2BaseTime.getTime() + (index * 2 * 60000)) // 2-minute stagger
+    }));
+
+    return { updatedRound1Matches, updatedRound2Matches };
   }
 
   static undoLastChange(
