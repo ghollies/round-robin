@@ -29,7 +29,7 @@ describe('TournamentSetup Component', () => {
       expect(screen.getByRole('combobox', { name: /tournament mode/i })).toHaveValue('individual-signup');
       expect(screen.getByDisplayValue('8')).toBeInTheDocument(); // participant count
       expect(screen.getByDisplayValue('2')).toBeInTheDocument(); // court count
-      expect(screen.getByDisplayValue('30')).toBeInTheDocument(); // match duration
+      expect(screen.getByDisplayValue('20')).toBeInTheDocument(); // match duration
       expect(screen.getByDisplayValue('11')).toBeInTheDocument(); // point limit
       expect(screen.getByRole('combobox', { name: /win condition/i })).toHaveValue('win-by-2');
       expect(screen.getByLabelText(/enable time limits/i)).toBeChecked();

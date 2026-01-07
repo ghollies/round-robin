@@ -69,7 +69,7 @@ describe('Data Model Creation', () => {
     expect(tournament.createdAt).toBeInstanceOf(Date);
     expect(tournament.updatedAt).toBeInstanceOf(Date);
     expect(tournament.settings.courtCount).toBe(4);
-    expect(tournament.settings.matchDuration).toBe(30);
+    expect(tournament.settings.matchDuration).toBe(20);
     expect(tournament.settings.pointLimit).toBe(11);
     expect(tournament.settings.scoringRule).toBe('win-by-2');
     expect(tournament.settings.timeLimit).toBe(true);
@@ -83,7 +83,7 @@ describe('Data Model Creation', () => {
     
     expect(tournament.settings.courtCount).toBe(6);
     expect(tournament.settings.pointLimit).toBe(15);
-    expect(tournament.settings.matchDuration).toBe(30); // default
+    expect(tournament.settings.matchDuration).toBe(20); // default
   });
 
   test('createParticipant creates valid participant', () => {
