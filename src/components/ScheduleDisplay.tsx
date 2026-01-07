@@ -10,22 +10,19 @@ export type ScheduleView = 'chronological' | 'by-court' | 'by-player' | 'by-roun
 interface ScheduleDisplayProps {
   schedule: GeneratedSchedule;
   participants: Participant[];
-  onMatchUpdate?: (matchId: string, updates: Partial<ScheduledMatch>) => void;
 }
 
 interface ScheduleStats {
   totalMatches: number;
   totalRounds: number;
   estimatedDuration: string;
-  courtUtilization: string;
 }
 
 const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
   schedule,
-  participants,
-  onMatchUpdate
+  participants
 }) => {
-  const [currentView, setCurrentView] = useState<ScheduleView>('chronological');
+  const [currentView, setCurrentView] = useState<ScheduleView>('by-round');
   const [selectedCourt, setSelectedCourt] = useState<number | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -38,13 +35,11 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
     const durationHours = Math.floor(schedule.optimization.totalDuration / 60);
     const durationMinutes = schedule.optimization.totalDuration % 60;
     const estimatedDuration = `${durationHours}h ${durationMinutes}m`;
-    const courtUtilization = `${schedule.optimization.courtUtilization.toFixed(1)}%`;
 
     return {
       totalMatches,
       totalRounds,
-      estimatedDuration,
-      courtUtilization
+      estimatedDuration
     };
   }, [schedule]);
 
@@ -260,15 +255,25 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
           <span>Total Matches: ${stats.totalMatches}</span>
           <span>Rounds: ${stats.totalRounds}</span>
           <span>Duration: ${stats.estimatedDuration}</span>
-          <span>Court Usage: ${stats.courtUtilization}</span>
         </div>
       </div>
     `;
     
-    groupedMatches.forEach(({ groupName, matches }) => {
+    groupedMatches.forEach(({ groupName, matches, byePlayer }) => {
       content += `
         <div class="print-group">
           <h2>${groupName}</h2>
+      `;
+      
+      if (byePlayer) {
+        content += `
+          <div class="print-bye-section">
+            <strong>Player on Bye:</strong> ${byePlayer}
+          </div>
+        `;
+      }
+      
+      content += `
           <table class="print-matches-table">
             <thead>
               <tr>
@@ -366,6 +371,19 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
         padding-bottom: 5px;
       }
       
+      .print-bye-section {
+        background: #f8f8f8;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        font-size: 11px;
+      }
+      
+      .print-bye-section strong {
+        font-weight: bold;
+      }
+      
       .print-matches-table {
         width: 100%;
         border-collapse: collapse;
@@ -408,7 +426,7 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
 
   // Group matches for display
   const groupedMatches = useMemo(() => {
-    const groups = new Map<string, ScheduledMatch[]>();
+    const groups = new Map<string, { matches: ScheduledMatch[]; byePlayer?: string }>();
 
     filteredMatches.forEach(match => {
       let groupKey: string;
@@ -432,16 +450,51 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
       }
 
       if (!groups.has(groupKey)) {
-        groups.set(groupKey, []);
+        groups.set(groupKey, { matches: [] });
       }
-      groups.get(groupKey)!.push(match);
+      groups.get(groupKey)!.matches.push(match);
     });
 
-    return Array.from(groups.entries()).map(([key, matches]) => ({
+    // Add bye information for by-round view
+    if (currentView === 'by-round') {
+      schedule.rounds.forEach(round => {
+        const groupKey = `Round ${round.roundNumber}`;
+        const group = groups.get(groupKey);
+        if (group && round.byeTeamId) {
+          // byeTeamId in individual signup mode is actually a player ID
+          group.byePlayer = getPlayerName(round.byeTeamId);
+        }
+      });
+    }
+
+    return Array.from(groups.entries()).map(([key, data]) => ({
       groupName: key,
-      matches
+      matches: data.matches,
+      byePlayer: data.byePlayer
     }));
-  }, [filteredMatches, currentView]);
+  }, [filteredMatches, currentView, schedule.rounds]);
+
+  const renderByeCard = (byePlayer: string) => (
+    <div className="match-card bye-card">
+      <div className="match-header">
+        <div className="match-info">
+          <span className="match-number">Bye</span>
+        </div>
+        <div className="match-status">
+          <span className="status-badge bye">
+            BYE
+          </span>
+        </div>
+      </div>
+
+      <div className="match-teams">
+        <div className="team bye-team">
+          <div className="team-label">Player:</div>
+          <div className="team-players">{byePlayer}</div>
+        </div>
+      </div>
+    </div>
+  );
 
   const renderMatchCard = (match: ScheduledMatch) => (
     <div key={match.id} className="match-card">
@@ -512,10 +565,6 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
             <span className="stat-label">Duration:</span>
             <span className="stat-value">{stats.estimatedDuration}</span>
           </div>
-          <div className="stat">
-            <span className="stat-label">Court Usage:</span>
-            <span className="stat-value">{stats.courtUtilization}</span>
-          </div>
         </div>
       </div>
 
@@ -575,10 +624,11 @@ const ScheduleDisplay: React.FC<ScheduleDisplayProps> = ({
             <p>No matches found for the selected criteria.</p>
           </div>
         ) : (
-          groupedMatches.map(({ groupName, matches }) => (
+          groupedMatches.map(({ groupName, matches, byePlayer }) => (
             <div key={groupName} className="match-group">
               <h3 className="group-header">{groupName}</h3>
               <div className="matches-grid">
+                {byePlayer && renderByeCard(byePlayer)}
                 {matches.map(renderMatchCard)}
               </div>
             </div>

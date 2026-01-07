@@ -170,12 +170,18 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
 
   const handleNext = useCallback(() => {
     if (validateForm()) {
-      // Initialize participants array based on count
-      const initialParticipants = Array(formData.participantCount).fill('');
+      // Initialize participants array with default names
+      const initialParticipants = Array(formData.participantCount).fill('').map((_, index) => {
+        if (formData.mode === 'pair-signup') {
+          return `Team ${index + 1}`;
+        } else {
+          return `Player ${index + 1}`;
+        }
+      });
       setParticipants(initialParticipants);
       setShowParticipantEntry(true);
     }
-  }, [validateForm, formData.participantCount]);
+  }, [validateForm, formData.participantCount, formData.mode]);
 
   const handleBack = useCallback(() => {
     setShowParticipantEntry(false);
@@ -263,7 +269,6 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
           id={`participant_${index}`}
           value={name}
           onChange={(e) => handleParticipantChange(index, e.target.value)}
-          placeholder={formData.mode === 'pair-signup' ? 'Smith/Johnson' : 'Player Name'}
           className={errors[`participant_${index}`] ? 'error' : ''}
         />
         {errors[`participant_${index}`] && (

@@ -1,7 +1,6 @@
 import {
   ScheduleGenerator,
   CourtAssignmentTracker,
-  RestPeriodTracker,
   generateOptimizedSchedule,
   createDefaultScheduleSettings
 } from '../scheduleGenerator';
@@ -50,72 +49,6 @@ describe('CourtAssignmentTracker', () => {
     expect(result.courtNumber).toBe(1);
     expect(result.assignedTime).toEqual(expectedTime);
   });
-
-  test('should calculate court utilization correctly', () => {
-    const startTime = new Date('2024-01-01T09:00:00');
-    
-    // Schedule 2 matches on court 1
-    tracker.reserveCourt(1, startTime);
-    tracker.reserveCourt(1, new Date('2024-01-01T09:30:00'));
-    
-    // Total duration: 2 hours (120 minutes)
-    // Total match time: 2 matches * 30 minutes = 60 minutes
-    // Total available time: 3 courts * 120 minutes = 360 minutes
-    // Utilization: 60/360 = 16.67%
-    const utilization = tracker.getCourtUtilization(120);
-    expect(utilization).toBeCloseTo(16.67, 1);
-  });
-});
-
-describe('RestPeriodTracker', () => {
-  let tracker: RestPeriodTracker;
-
-  beforeEach(() => {
-    tracker = new RestPeriodTracker(15); // 15-minute rest period
-  });
-
-  test('should allow immediate play for new player', () => {
-    const currentTime = new Date('2024-01-01T09:00:00');
-    const result = tracker.getEarliestPlayTime('player1', currentTime);
-    
-    expect(result).toEqual(currentTime);
-  });
-
-  test('should enforce rest period after match', () => {
-    const matchEndTime = new Date('2024-01-01T09:30:00');
-    const currentTime = new Date('2024-01-01T09:35:00');
-    
-    tracker.recordMatchEnd('player1', matchEndTime);
-    const result = tracker.getEarliestPlayTime('player1', currentTime);
-    
-    const expectedTime = new Date('2024-01-01T09:45:00'); // 15 minutes after match end
-    expect(result).toEqual(expectedTime);
-  });
-
-  test('should return current time if rest period already satisfied', () => {
-    const matchEndTime = new Date('2024-01-01T09:00:00');
-    const currentTime = new Date('2024-01-01T09:30:00'); // 30 minutes later
-    
-    tracker.recordMatchEnd('player1', matchEndTime);
-    const result = tracker.getEarliestPlayTime('player1', currentTime);
-    
-    expect(result).toEqual(currentTime);
-  });
-
-  test('should find earliest time for multiple players', () => {
-    const matchEndTime1 = new Date('2024-01-01T09:00:00');
-    const matchEndTime2 = new Date('2024-01-01T09:10:00');
-    const currentTime = new Date('2024-01-01T09:05:00');
-    
-    tracker.recordMatchEnd('player1', matchEndTime1);
-    tracker.recordMatchEnd('player2', matchEndTime2);
-    
-    const result = tracker.getEarliestMatchTime(['player1', 'player2'], currentTime);
-    
-    // Player2 needs to wait until 09:25 (09:10 + 15 minutes)
-    const expectedTime = new Date('2024-01-01T09:25:00');
-    expect(result).toEqual(expectedTime);
-  });
 });
 
 describe('ScheduleGenerator', () => {
@@ -143,26 +76,24 @@ describe('ScheduleGenerator', () => {
     const settings = {
       startTime: new Date('2024-01-01T09:00:00'),
       courtCount: 2,
-      matchDuration: 30,
-      restPeriod: 15
+      matchDuration: 30
     };
 
     const generator = new ScheduleGenerator(tournament, participants, settings);
     const schedule = generator.generateSchedule();
 
     // For 4 players in individual signup: (4-1) = 3 rounds
-    // Each round has 4/2 = 2 matches
-    // Total: 3 * 2 = 6 matches
+    // Each round has 1 match (4 players = 2 partnerships = 1 match)
+    // Total: 3 rounds * 1 match per round = 3 matches
     expect(schedule.rounds).toHaveLength(3);
-    expect(schedule.scheduledMatches).toHaveLength(6);
+    expect(schedule.scheduledMatches).toHaveLength(3);
   });
 
   test('should assign courts properly', () => {
     const settings = {
       startTime: new Date('2024-01-01T09:00:00'),
       courtCount: 2,
-      matchDuration: 30,
-      restPeriod: 15
+      matchDuration: 30
     };
 
     const generator = new ScheduleGenerator(tournament, participants, settings);
@@ -181,21 +112,20 @@ describe('ScheduleGenerator', () => {
       courtUsage.set(match.courtNumber, count + 1);
     });
 
-    // With 6 matches and 2 courts, both courts should be used
+    // With 3 matches and 2 courts, at least one court should be used
     expect(courtUsage.size).toBeGreaterThan(0);
     expect(courtUsage.get(1)).toBeGreaterThan(0);
     
     // Total matches should equal the sum of matches on all courts
     const totalMatches = Array.from(courtUsage.values()).reduce((sum, count) => sum + count, 0);
-    expect(totalMatches).toBe(6);
+    expect(totalMatches).toBe(3);
   });
 
   test('should schedule matches with proper time intervals', () => {
     const settings = {
       startTime: new Date('2024-01-01T09:00:00'),
       courtCount: 1, // Single court to force sequential scheduling
-      matchDuration: 30,
-      restPeriod: 15
+      matchDuration: 30
     };
 
     const generator = new ScheduleGenerator(tournament, participants, settings);
@@ -224,8 +154,7 @@ describe('ScheduleGenerator', () => {
     const settings = {
       startTime: new Date('2024-01-01T09:00:00'),
       courtCount: 2,
-      matchDuration: 30,
-      restPeriod: 15
+      matchDuration: 30
     };
 
     const generator = new ScheduleGenerator(tournament, participants, settings);
@@ -233,9 +162,6 @@ describe('ScheduleGenerator', () => {
 
     expect(schedule.optimization.totalDuration).toBeGreaterThan(0);
     expect(schedule.optimization.sessionsCount).toBe(1);
-    expect(schedule.optimization.averageRestPeriod).toBe(15);
-    expect(schedule.optimization.courtUtilization).toBeGreaterThan(0);
-    expect(schedule.optimization.courtUtilization).toBeLessThanOrEqual(100);
   });
 });
 
@@ -274,8 +200,7 @@ describe('generateOptimizedSchedule', () => {
   test('should use custom settings when provided', () => {
     const customStartTime = new Date('2024-01-01T14:00:00');
     const customSettings = {
-      startTime: customStartTime,
-      restPeriod: 20
+      startTime: customStartTime
     };
 
     const schedule = generateOptimizedSchedule(tournament, participants, customSettings);
@@ -286,7 +211,6 @@ describe('generateOptimizedSchedule', () => {
     );
     
     expect(firstMatch.scheduledTime.getTime()).toBeGreaterThanOrEqual(customStartTime.getTime());
-    expect(schedule.optimization.averageRestPeriod).toBe(20);
   });
 
   test('should handle odd number of participants', () => {
@@ -325,15 +249,14 @@ describe('createDefaultScheduleSettings', () => {
 
     expect(settings.courtCount).toBe(4);
     expect(settings.matchDuration).toBe(20);
-    expect(settings.restPeriod).toBe(15); // Max of 15 or 50% of 20 = 15
     expect(settings.sessionBreakDuration).toBe(60);
     expect(settings.startTime).toBeInstanceOf(Date);
   });
 
-  test('should set minimum rest period', () => {
+  test('should set default session break duration', () => {
     const tournament = createTournament('Test', 'individual-signup', {
       courtCount: 2,
-      matchDuration: 15, // Short matches
+      matchDuration: 15,
       pointLimit: 11,
       scoringRule: 'win-by-2',
       timeLimit: true
@@ -341,14 +264,13 @@ describe('createDefaultScheduleSettings', () => {
 
     const settings = createDefaultScheduleSettings(tournament);
 
-    // Should use minimum of 15 minutes even though 50% of 15 is 7.5
-    expect(settings.restPeriod).toBe(15);
+    expect(settings.sessionBreakDuration).toBe(60);
   });
 
-  test('should calculate rest period as percentage of match duration for longer matches', () => {
+  test('should use tournament settings for court and match configuration', () => {
     const tournament = createTournament('Test', 'individual-signup', {
       courtCount: 2,
-      matchDuration: 60, // Long matches
+      matchDuration: 60,
       pointLimit: 11,
       scoringRule: 'win-by-2',
       timeLimit: true
@@ -356,7 +278,7 @@ describe('createDefaultScheduleSettings', () => {
 
     const settings = createDefaultScheduleSettings(tournament);
 
-    // Should use 50% of 60 = 30 minutes
-    expect(settings.restPeriod).toBe(30);
+    expect(settings.courtCount).toBe(2);
+    expect(settings.matchDuration).toBe(60);
   });
 });

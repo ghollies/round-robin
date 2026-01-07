@@ -121,9 +121,7 @@ describe('ScheduleDisplay - Basic Functionality', () => {
     scheduledMatches: [mockScheduledMatch],
     optimization: {
       totalDuration: 120,
-      sessionsCount: 1,
-      averageRestPeriod: 15,
-      courtUtilization: 75.5,
+      sessionsCount: 1
     },
     teams: [
       {
@@ -160,15 +158,13 @@ describe('ScheduleDisplay - Basic Functionality', () => {
       expect(screen.getByText('Rounds:')).toBeInTheDocument();
       expect(screen.getByText('Duration:')).toBeInTheDocument();
       expect(screen.getByText('2h 0m')).toBeInTheDocument();
-      expect(screen.getByText('Court Usage:')).toBeInTheDocument();
-      expect(screen.getByText('75.5%')).toBeInTheDocument();
     });
 
     it('renders schedule controls with view selector', () => {
       render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
       
       expect(screen.getByLabelText('View:')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('Chronological')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('By Round')).toBeInTheDocument();
     });
 
     it('renders match information', () => {
@@ -276,6 +272,117 @@ describe('ScheduleDisplay - Basic Functionality', () => {
 
       expect(screen.getByText('11 - 8')).toBeInTheDocument();
       expect(screen.getByText('Winner: Alice Johnson / Bob Smith')).toBeInTheDocument();
+    });
+  });
+
+  describe('Bye Round Display', () => {
+    it('displays bye player information in by-round view', () => {
+      const scheduleWithBye: GeneratedSchedule = {
+        rounds: [
+          {
+            id: 'r1',
+            tournamentId: 't1',
+            roundNumber: 1,
+            status: 'pending',
+            matches: [
+              {
+                id: 'm1',
+                tournamentId: 't1',
+                roundNumber: 1,
+                matchNumber: 1,
+                team1Id: 'team1',
+                team2Id: 'team2',
+                courtNumber: 1,
+                scheduledTime: new Date('2024-01-15T09:00:00'),
+                status: 'scheduled',
+              },
+            ],
+            byeTeamId: 'p3', // Carol Davis has bye
+          },
+        ],
+        scheduledMatches: [mockScheduledMatch],
+        optimization: {
+          totalDuration: 120,
+          sessionsCount: 1
+        },
+        teams: mockSchedule.teams,
+      };
+
+      render(<ScheduleDisplay schedule={scheduleWithBye} participants={mockParticipants} />);
+
+      // Switch to by-round view
+      const viewSelect = screen.getByLabelText('View:');
+      fireEvent.change(viewSelect, { target: { value: 'by-round' } });
+
+      // Check that bye information is displayed as a match-like card
+      expect(screen.getByText('Bye')).toBeInTheDocument();
+      expect(screen.getByText('BYE')).toBeInTheDocument();
+      expect(screen.getByText('Carol Davis')).toBeInTheDocument();
+      expect(screen.getByText('Player:')).toBeInTheDocument();
+    });
+
+    it('does not display bye section when no bye player exists', () => {
+      render(<ScheduleDisplay schedule={mockSchedule} participants={mockParticipants} />);
+
+      // Switch to by-round view
+      const viewSelect = screen.getByLabelText('View:');
+      fireEvent.change(viewSelect, { target: { value: 'by-round' } });
+
+      // Check that bye information is not displayed
+      expect(screen.queryByText('Bye')).not.toBeInTheDocument();
+      expect(screen.queryByText('BYE')).not.toBeInTheDocument();
+    });
+
+    it('does not display bye section in non-round views', () => {
+      const scheduleWithBye: GeneratedSchedule = {
+        rounds: [
+          {
+            id: 'r1',
+            tournamentId: 't1',
+            roundNumber: 1,
+            status: 'pending',
+            matches: [
+              {
+                id: 'm1',
+                tournamentId: 't1',
+                roundNumber: 1,
+                matchNumber: 1,
+                team1Id: 'team1',
+                team2Id: 'team2',
+                courtNumber: 1,
+                scheduledTime: new Date('2024-01-15T09:00:00'),
+                status: 'scheduled',
+              },
+            ],
+            byeTeamId: 'p3', // Carol Davis has bye
+          },
+        ],
+        scheduledMatches: [mockScheduledMatch],
+        optimization: {
+          totalDuration: 120,
+          sessionsCount: 1
+        },
+        teams: mockSchedule.teams,
+      };
+
+      render(<ScheduleDisplay schedule={scheduleWithBye} participants={mockParticipants} />);
+
+      // Default view is by-round - bye SHOULD be shown
+      expect(screen.getByText('Bye')).toBeInTheDocument();
+      expect(screen.getByText('Carol Davis')).toBeInTheDocument();
+
+      // Switch to chronological view - bye should not be shown
+      const viewSelect = screen.getByLabelText('View:');
+      fireEvent.change(viewSelect, { target: { value: 'chronological' } });
+      expect(screen.queryByText('Bye')).not.toBeInTheDocument();
+
+      // Switch to by-court view - bye should not be shown
+      fireEvent.change(viewSelect, { target: { value: 'by-court' } });
+      expect(screen.queryByText('Bye')).not.toBeInTheDocument();
+
+      // Switch to by-player view - bye should not be shown
+      fireEvent.change(viewSelect, { target: { value: 'by-player' } });
+      expect(screen.queryByText('Bye')).not.toBeInTheDocument();
     });
   });
 

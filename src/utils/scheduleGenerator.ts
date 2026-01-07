@@ -1,12 +1,10 @@
 import { Tournament, Participant, Team, Match, Round } from '../types/tournament';
 import { generateIndividualSignupRoundRobin } from './roundRobinAlgorithm';
-import { createTeam } from './factories';
 
 export interface ScheduleSettings {
   startTime: Date;
   courtCount: number;
   matchDuration: number; // minutes
-  restPeriod: number; // minutes between matches for same player
   sessionBreakDuration?: number; // minutes for longer breaks between sessions
 }
 
@@ -24,8 +22,6 @@ export interface ScheduledMatch extends Match {
 export interface ScheduleOptimization {
   totalDuration: number; // minutes
   sessionsCount: number;
-  averageRestPeriod: number;
-  courtUtilization: number; // percentage
 }
 
 export interface GeneratedSchedule {
@@ -120,76 +116,69 @@ export class CourtAssignmentTracker {
     const lastMatchEnd = new Date(lastMatch.getTime() + this.matchDuration * 60000);
     return new Date(Math.max(lastMatchEnd.getTime(), earliestTime.getTime()));
   }
-
-  /**
-   * Get court utilization statistics
-   */
-  getCourtUtilization(totalDuration: number): number {
-    let totalMatchTime = 0;
-    
-    for (const courtSchedule of this.courtSchedules.values()) {
-      totalMatchTime += courtSchedule.length * this.matchDuration;
-    }
-    
-    const totalAvailableTime = this.courtCount * totalDuration;
-    return totalAvailableTime > 0 ? (totalMatchTime / totalAvailableTime) * 100 : 0;
-  }
 }
 
 /**
- * Player rest period tracker to ensure adequate rest between matches
+ * Player availability tracker to prevent scheduling conflicts
  */
-export class RestPeriodTracker {
-  private playerLastMatchEnd: Map<string, Date>;
-  private restPeriod: number;
+export class PlayerAvailabilityTracker {
+  private playerSchedules: Map<string, Date[]>;
+  private matchDuration: number;
 
-  constructor(restPeriod: number) {
-    this.restPeriod = restPeriod;
-    this.playerLastMatchEnd = new Map();
+  constructor(matchDuration: number) {
+    this.matchDuration = matchDuration;
+    this.playerSchedules = new Map();
   }
 
   /**
-   * Get the earliest time a player can play their next match
+   * Check if all players are available at the given time
    */
-  getEarliestPlayTime(playerId: string, currentTime: Date): Date {
-    const lastMatchEnd = this.playerLastMatchEnd.get(playerId);
-    if (!lastMatchEnd) {
-      return currentTime;
-    }
-
-    const earliestNextMatch = new Date(lastMatchEnd.getTime() + this.restPeriod * 60000);
-    return new Date(Math.max(earliestNextMatch.getTime(), currentTime.getTime()));
-  }
-
-  /**
-   * Record when a player's match ends
-   */
-  recordMatchEnd(playerId: string, matchEndTime: Date): void {
-    this.playerLastMatchEnd.set(playerId, matchEndTime);
-  }
-
-  /**
-   * Get the earliest time all players in a match can play
-   */
-  getEarliestMatchTime(playerIds: string[], currentTime: Date): Date {
-    let earliestTime = currentTime;
+  arePlayersAvailable(playerIds: string[], proposedTime: Date): boolean {
+    const proposedEndTime = new Date(proposedTime.getTime() + this.matchDuration * 60000);
     
     for (const playerId of playerIds) {
-      const playerEarliestTime = this.getEarliestPlayTime(playerId, currentTime);
-      if (playerEarliestTime > earliestTime) {
-        earliestTime = playerEarliestTime;
+      const playerSchedule = this.playerSchedules.get(playerId) || [];
+      
+      // Check if this time conflicts with any existing matches for this player
+      for (const existingMatchTime of playerSchedule) {
+        const existingEndTime = new Date(existingMatchTime.getTime() + this.matchDuration * 60000);
+        
+        // Check for overlap: new match starts before existing ends AND new match ends after existing starts
+        const hasOverlap = proposedTime < existingEndTime && proposedEndTime > existingMatchTime;
+        if (hasOverlap) {
+          return false;
+        }
       }
     }
     
-    return earliestTime;
+    return true;
   }
 
   /**
-   * Calculate average rest period for all players
+   * Find the earliest time when all players are available
    */
-  calculateAverageRestPeriod(): number {
-    // This would require tracking actual rest periods, for now return configured value
-    return this.restPeriod;
+  getEarliestAvailableTime(playerIds: string[], earliestTime: Date): Date {
+    let currentTime = new Date(earliestTime);
+    
+    // Keep checking until we find a time when all players are available
+    while (!this.arePlayersAvailable(playerIds, currentTime)) {
+      // Move forward by 15-minute increments to find next available slot
+      currentTime = new Date(currentTime.getTime() + 15 * 60000);
+    }
+    
+    return currentTime;
+  }
+
+  /**
+   * Reserve players for a match at the given time
+   */
+  reservePlayers(playerIds: string[], matchTime: Date): void {
+    for (const playerId of playerIds) {
+      if (!this.playerSchedules.has(playerId)) {
+        this.playerSchedules.set(playerId, []);
+      }
+      this.playerSchedules.get(playerId)!.push(matchTime);
+    }
   }
 }
 
@@ -212,7 +201,7 @@ export class ScheduleGenerator {
    */
   generateSchedule(): GeneratedSchedule {
     // Generate rounds using the round robin algorithm
-    const { rounds, isValid, errors } = generateIndividualSignupRoundRobin(
+    const { rounds, teams, isValid, errors } = generateIndividualSignupRoundRobin(
       this.participants,
       this.tournament.id
     );
@@ -221,91 +210,19 @@ export class ScheduleGenerator {
       throw new Error(`Failed to generate rounds: ${errors.join(', ')}`);
     }
 
-    // Create teams and assign opponents for individual signup mode
-    const { updatedRounds, teams } = this.createTeamsAndOpponents(rounds);
-
-    // Optimize schedule timing and court assignments
-    const scheduledMatches = this.optimizeSchedule(updatedRounds, teams);
+    // Use the teams created by the round robin algorithm
+    const scheduledMatches = this.optimizeSchedule(rounds, teams);
 
     // Calculate optimization metrics
     const optimization = this.calculateOptimization(scheduledMatches);
 
     return {
-      rounds: updatedRounds,
+      rounds,
       scheduledMatches,
       optimization,
       teams
     };
   }
-
-  /**
-   * Create teams and assign opponents for individual signup tournaments
-   */
-  private createTeamsAndOpponents(rounds: Round[]): { updatedRounds: Round[]; teams: Team[] } {
-    const teams: Team[] = [];
-    const teamMap = new Map<string, Team>();
-    const updatedRounds: Round[] = [];
-
-    for (const round of rounds) {
-      const updatedMatches: Match[] = [];
-      
-      for (const match of round.matches) {
-        // For individual signup, we need to create proper teams
-        // For now, we'll create teams based on available participants
-        // This is a simplified implementation
-        
-        let team1: Team;
-        let team2: Team;
-        
-        if (teamMap.has(match.team1Id)) {
-          team1 = teamMap.get(match.team1Id)!;
-        } else {
-          // Create team from first two participants (simplified)
-          const availableParticipants = this.participants.slice();
-          team1 = createTeam(
-            this.tournament.id,
-            availableParticipants[0]?.id || 'player1',
-            availableParticipants[1]?.id || 'player2',
-            false
-          );
-          teams.push(team1);
-          teamMap.set(match.team1Id, team1);
-        }
-        
-        if (teamMap.has(match.team2Id)) {
-          team2 = teamMap.get(match.team2Id)!;
-        } else {
-          // Create opponent team from remaining participants (simplified)
-          const availableParticipants = this.participants.slice();
-          team2 = createTeam(
-            this.tournament.id,
-            availableParticipants[2]?.id || 'player3',
-            availableParticipants[3]?.id || 'player4',
-            false
-          );
-          teams.push(team2);
-          teamMap.set(match.team2Id, team2);
-        }
-        
-        const updatedMatch: Match = {
-          ...match,
-          team1Id: team1.id,
-          team2Id: team2.id
-        };
-        
-        updatedMatches.push(updatedMatch);
-      }
-      
-      updatedRounds.push({
-        ...round,
-        matches: updatedMatches
-      });
-    }
-
-    return { updatedRounds, teams };
-  }
-
-
 
   /**
    * Optimize schedule timing and court assignments
@@ -316,7 +233,7 @@ export class ScheduleGenerator {
       this.settings.matchDuration
     );
     
-    const restTracker = new RestPeriodTracker(this.settings.restPeriod);
+    const playerTracker = new PlayerAvailabilityTracker(this.settings.matchDuration);
     const scheduledMatches: ScheduledMatch[] = [];
     let currentTime = new Date(this.settings.startTime);
 
@@ -332,20 +249,32 @@ export class ScheduleGenerator {
         // Get all player IDs involved in this match
         const playerIds = [team1.player1Id, team1.player2Id, team2.player1Id, team2.player2Id];
         
-        // Find earliest time all players can play
-        const earliestMatchTime = restTracker.getEarliestMatchTime(playerIds, currentTime);
+        // Find earliest time when all players are available
+        const earliestPlayerTime = playerTracker.getEarliestAvailableTime(playerIds, currentTime);
         
-        // Find available court
-        const { courtNumber, assignedTime } = courtTracker.findAvailableCourt(earliestMatchTime);
+        // Find available court at or after the earliest player availability time
+        const { courtNumber, assignedTime } = courtTracker.findAvailableCourt(earliestPlayerTime);
         
-        // Reserve the court
-        courtTracker.reserveCourt(courtNumber, assignedTime);
+        // Double-check that all players are still available at the assigned time
+        // (court assignment might have pushed the time later)
+        const finalTime = playerTracker.arePlayersAvailable(playerIds, assignedTime) 
+          ? assignedTime 
+          : playerTracker.getEarliestAvailableTime(playerIds, assignedTime);
+        
+        // If the final time is different from assigned time, we need to find a new court slot
+        const finalCourtAssignment = finalTime.getTime() === assignedTime.getTime()
+          ? { courtNumber, assignedTime: finalTime }
+          : courtTracker.findAvailableCourt(finalTime);
+        
+        // Reserve the court and players
+        courtTracker.reserveCourt(finalCourtAssignment.courtNumber, finalCourtAssignment.assignedTime);
+        playerTracker.reservePlayers(playerIds, finalCourtAssignment.assignedTime);
         
         // Create scheduled match
         const scheduledMatch: ScheduledMatch = {
           ...match,
-          courtNumber,
-          scheduledTime: assignedTime,
+          courtNumber: finalCourtAssignment.courtNumber,
+          scheduledTime: finalCourtAssignment.assignedTime,
           teams: { team1, team2 },
           participants: {
             team1Players: this.getPlayersForTeam(team1),
@@ -355,15 +284,9 @@ export class ScheduleGenerator {
         
         scheduledMatches.push(scheduledMatch);
         
-        // Update rest tracker
-        const matchEndTime = new Date(assignedTime.getTime() + this.settings.matchDuration * 60000);
-        playerIds.forEach(playerId => {
-          restTracker.recordMatchEnd(playerId, matchEndTime);
-        });
-        
         // Update current time for next iteration
-        if (assignedTime > currentTime) {
-          currentTime = assignedTime;
+        if (finalCourtAssignment.assignedTime > currentTime) {
+          currentTime = finalCourtAssignment.assignedTime;
         }
       }
     }
@@ -388,9 +311,7 @@ export class ScheduleGenerator {
     if (scheduledMatches.length === 0) {
       return {
         totalDuration: 0,
-        sessionsCount: 1,
-        averageRestPeriod: this.settings.restPeriod,
-        courtUtilization: 0
+        sessionsCount: 1
       };
     }
 
@@ -405,16 +326,9 @@ export class ScheduleGenerator {
     // Calculate sessions (simplified - assume one session for now)
     const sessionsCount = 1;
 
-    // Calculate court utilization
-    const totalMatchTime = scheduledMatches.length * this.settings.matchDuration;
-    const totalAvailableTime = this.settings.courtCount * totalDuration;
-    const courtUtilization = totalAvailableTime > 0 ? (totalMatchTime / totalAvailableTime) * 100 : 0;
-
     return {
       totalDuration,
-      sessionsCount,
-      averageRestPeriod: this.settings.restPeriod,
-      courtUtilization
+      sessionsCount
     };
   }
 }
@@ -430,7 +344,6 @@ export function createDefaultScheduleSettings(tournament: Tournament): ScheduleS
     startTime,
     courtCount: tournament.settings.courtCount,
     matchDuration: tournament.settings.matchDuration,
-    restPeriod: Math.max(15, Math.floor(tournament.settings.matchDuration * 0.5)), // At least 15 min or 50% of match duration
     sessionBreakDuration: 60 // 1 hour break between sessions
   };
 }

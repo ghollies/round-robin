@@ -196,6 +196,28 @@ export class IndividualSignupRoundRobin {
   }
 
   /**
+   * Generate all rounds and teams for the tournament
+   */
+  generateRoundsWithTeams(): { rounds: Round[]; teams: Team[] } {
+    const rounds: Round[] = [];
+    const teams: Team[] = [];
+    const n = this.participants.length;
+    const totalRounds = this.getRequiredRounds();
+    
+    // Organize all partnerships into rounds systematically
+    const roundPartnerships = this.organizePartnershipsIntoRounds();
+    
+    for (let roundNumber = 1; roundNumber <= totalRounds; roundNumber++) {
+      const partnerships = roundPartnerships[roundNumber - 1] || [];
+      const { round, roundTeams } = this.createRoundFromPartnershipsWithTeams(roundNumber, partnerships);
+      rounds.push(round);
+      teams.push(...roundTeams);
+    }
+    
+    return { rounds, teams };
+  }
+
+  /**
    * Organize all partnerships into rounds systematically
    */
   private organizePartnershipsIntoRounds(): Partnership[][] {
@@ -579,6 +601,51 @@ export class IndividualSignupRoundRobin {
     return createRound(this.tournamentId, roundNumber, matches, byePlayerId);
   }
 
+  /**
+   * Create a round from a list of partnerships and return both the round and teams
+   */
+  private createRoundFromPartnershipsWithTeams(roundNumber: number, partnerships: Partnership[]): { round: Round; roundTeams: Team[] } {
+    const n = this.participants.length;
+    const matches: Match[] = [];
+    const roundTeams: Team[] = [];
+    let byePlayerId: string | undefined;
+    
+    // Handle bye for odd number of players
+    if (n % 2 === 1) {
+      byePlayerId = this.participants[(roundNumber - 1) % n].id;
+    }
+    
+    // Create matches from partnerships (every 2 partnerships = 1 match)
+    for (let i = 0; i < partnerships.length; i += 2) {
+      if (partnerships[i] && partnerships[i + 1]) {
+        const partnership1 = partnerships[i];
+        const partnership2 = partnerships[i + 1];
+        
+        // Create teams
+        const team1 = createTeam(this.tournamentId, partnership1.player1.id, partnership1.player2.id, false);
+        const team2 = createTeam(this.tournamentId, partnership2.player1.id, partnership2.player2.id, false);
+        
+        // Add teams to the collection
+        roundTeams.push(team1, team2);
+        
+        const match = createMatch(
+          this.tournamentId,
+          roundNumber,
+          matches.length + 1,
+          team1.id,
+          team2.id,
+          1,
+          new Date()
+        );
+        
+        matches.push(match);
+      }
+    }
+    
+    const round = createRound(this.tournamentId, roundNumber, matches, byePlayerId);
+    return { round, roundTeams };
+  }
+
 
 
   /**
@@ -641,20 +708,22 @@ export class IndividualSignupRoundRobin {
 export function generateIndividualSignupRoundRobin(
   participants: Participant[],
   tournamentId: string
-): { rounds: Round[]; isValid: boolean; errors: string[] } {
+): { rounds: Round[]; teams: Team[]; isValid: boolean; errors: string[] } {
   try {
     const algorithm = new IndividualSignupRoundRobin(participants, tournamentId);
-    const rounds = algorithm.generateRounds();
+    const { rounds, teams } = algorithm.generateRoundsWithTeams();
     const validation = algorithm.validateSchedule(rounds);
     
     return {
       rounds,
+      teams,
       isValid: validation.isValid,
       errors: validation.errors
     };
   } catch (error) {
     return {
       rounds: [],
+      teams: [],
       isValid: false,
       errors: [error instanceof Error ? error.message : 'Unknown error occurred']
     };

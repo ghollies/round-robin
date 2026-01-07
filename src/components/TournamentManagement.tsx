@@ -66,9 +66,7 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
       
       const optimization = {
         totalDuration: Math.floor(totalDuration / 60000), // Convert to minutes
-        sessionsCount: 1,
-        averageRestPeriod: 15,
-        courtUtilization: 85 // Approximate value
+        sessionsCount: 1
       };
 
       const generatedSchedule: GeneratedSchedule = {
@@ -88,8 +86,7 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
     
     try {
       const generatedSchedule = generateOptimizedSchedule(tournament, participants, {
-        startTime: new Date(Date.now() + 60000), // Start in 1 minute
-        restPeriod: 15
+        startTime: new Date(Date.now() + 60000) // Start in 1 minute
       });
       setSchedule(generatedSchedule);
       setCurrentView('schedule');
@@ -244,10 +241,6 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
                 <div className="stat">
                   <strong>{Math.floor(schedule.optimization.totalDuration / 60)}h {schedule.optimization.totalDuration % 60}m</strong>
                   <span>Estimated Duration</span>
-                </div>
-                <div className="stat">
-                  <strong>{schedule.optimization.courtUtilization.toFixed(1)}%</strong>
-                  <span>Court Utilization</span>
                 </div>
               </div>
               <div className="schedule-actions">

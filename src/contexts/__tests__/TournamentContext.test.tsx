@@ -14,9 +14,7 @@ const mockGenerateOptimizedSchedule = jest.fn(() => ({
   scheduledMatches: [],
   optimization: {
     totalDuration: 120,
-    sessionsCount: 1,
-    averageRestPeriod: 15,
-    courtUtilization: 85
+    sessionsCount: 1
   },
   teams: []
 }));
@@ -27,9 +25,7 @@ jest.mock('../../utils/scheduleGenerator', () => ({
     scheduledMatches: [],
     optimization: {
       totalDuration: 120,
-      sessionsCount: 1,
-      averageRestPeriod: 15,
-      courtUtilization: 85
+      sessionsCount: 1
     },
     teams: []
   }))

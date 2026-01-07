@@ -118,6 +118,54 @@
   gap: 20px;
 }
 
+.bye-card {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  grid-column: span 1;
+  max-width: 200px;
+  padding: 12px;
+  margin: 0 auto;
+}
+
+.bye-card .match-header {
+  border-bottom-color: #ffeaa7;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+}
+
+.bye-card .match-number {
+  color: #856404;
+  font-size: 0.875rem;
+}
+
+.bye-card .match-teams {
+  margin-bottom: 8px;
+}
+
+.status-badge.bye {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  font-size: 0.625rem;
+  padding: 2px 6px;
+}
+
+.bye-team {
+  text-align: center;
+}
+
+.bye-team .team-label {
+  color: #856404;
+  font-size: 0.625rem;
+  margin-bottom: 2px;
+}
+
+.bye-team .team-players {
+  color: #856404;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
 .match-card {
   background: white;
   border: 1px solid #e9ecef;
@@ -375,6 +423,18 @@
     justify-content: space-between;
   }
   
+  .bye-card {
+    padding: 12px;
+  }
+  
+  .bye-player strong {
+    font-size: 0.9rem;
+  }
+  
+  .bye-note {
+    font-size: 0.8rem;
+  }
+  
   .matches-grid {
     grid-template-columns: 1fr;
   }
@@ -439,6 +499,19 @@
   border: 1px solid #000 !important;
   margin-bottom: 15px !important;
   background: white !important;
+}
+
+.pdf-export .bye-card {
+  background: #f8f8f8 !important;
+  border: 1px solid #ccc !important;
+  box-shadow: none !important;
+  color: #000 !important;
+}
+
+.pdf-export .bye-label,
+.pdf-export .bye-player strong,
+.pdf-export .bye-note {
+  color: #000 !important;
 }
 
 .pdf-export .matches-grid {
