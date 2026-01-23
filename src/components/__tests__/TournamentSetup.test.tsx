@@ -352,14 +352,19 @@ describe('TournamentSetup Component', () => {
         expect.objectContaining({
           name: 'Test Tournament',
           mode: 'individual-signup',
-          settings: {
+          settings: expect.objectContaining({
             courtCount: 2,
             matchDuration: 25,
             pointLimit: 15,
             scoringRule: 'first-to-limit',
             timeLimit: false,
-          },
+            startDateTime: expect.any(Date),
+          }),
           status: 'setup',
+          id: expect.any(String),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          scheduledStartTime: expect.any(Date),
         }),
         ['John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Brown']
       );

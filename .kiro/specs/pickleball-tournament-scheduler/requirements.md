@@ -8,11 +8,11 @@ This feature will create a web-based application that enables tournament directo
 
 ### Requirement 1
 
-**User Story:** As a tournament director, I want to input tournament parameters (number of teams, courts, and time slots), so that I can configure the tournament structure before generating schedules.
+**User Story:** As a tournament director, I want to input tournament parameters (number of teams, courts, time slots, and start date/time), so that I can configure the tournament structure and schedule it for a specific future date and time.
 
 #### Acceptance Criteria
 
-1. WHEN the tournament director accesses the setup page THEN the system SHALL display input fields for tournament mode (pair signup or individual signup), number of participants, number of courts, match duration, point limit, and scoring rules
+1. WHEN the tournament director accesses the setup page THEN the system SHALL display input fields for tournament mode (pair signup or individual signup), number of participants, number of courts, match duration, point limit, scoring rules, and tournament start date/time
 2. WHEN the director selects pair signup mode THEN the system SHALL validate that the number of teams is between 4-32
 3. WHEN the director selects individual signup mode THEN the system SHALL validate that the number of individual players is between 4-32
 4. WHEN the director enters court information THEN the system SHALL validate that the number of courts is between 1-16
@@ -20,7 +20,10 @@ This feature will create a web-based application that enables tournament directo
 6. WHEN the director sets point limits THEN the system SHALL allow configuration of games to a specific point total (e.g., 11, 15, 21 points)
 7. WHEN the director configures scoring rules THEN the system SHALL allow selection between "win-by-2" or "first-to-point-limit" victory conditions
 8. WHEN the director sets both time and point limits THEN the system SHALL allow matches to end by either condition being met first
-9. IF any parameter is invalid THEN the system SHALL display specific error messages and prevent schedule generation
+9. WHEN the director enters a tournament start date and time THEN the system SHALL validate that the date/time is in the future and allow scheduling tournaments for any future date
+10. WHEN the director does not specify a start date/time THEN the system SHALL default to the next available time slot (current time + 30 minutes)
+11. WHEN the director specifies a start time THEN the system SHALL use that exact time for the first match time slot
+12. IF any parameter is invalid THEN the system SHALL display specific error messages and prevent schedule generation
 
 ### Requirement 2
 

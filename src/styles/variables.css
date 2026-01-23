@@ -139,24 +139,7 @@
   --container-2xl: 1320px;
 }
 
-/* Dark Mode Variables */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-text-primary: #f8f9fa;
-    --color-text-secondary: #adb5bd;
-    --color-text-muted: #6c757d;
-    --color-text-inverse: #212529;
-    
-    --color-bg-primary: #212529;
-    --color-bg-secondary: #343a40;
-    --color-bg-tertiary: #495057;
-    --color-bg-overlay: rgba(255, 255, 255, 0.1);
-    
-    --color-border-light: #495057;
-    --color-border-medium: #6c757d;
-    --color-border-dark: #adb5bd;
-  }
-}
+/* Force Light Mode - Dark mode variables removed to ensure consistent light theme */
 
 /* High Contrast Mode */
 @media (prefers-contrast: high) {

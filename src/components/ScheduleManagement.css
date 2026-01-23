@@ -499,12 +499,17 @@
 }
 
 .rounds-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  padding-bottom: 15px;
+  padding: 15px 20px;
   border-bottom: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .rounds-header h3 {

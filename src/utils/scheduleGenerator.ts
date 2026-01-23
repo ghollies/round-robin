@@ -337,8 +337,17 @@ export class ScheduleGenerator {
  * Utility function to create default schedule settings
  */
 export function createDefaultScheduleSettings(tournament: Tournament): ScheduleSettings {
-  const startTime = new Date();
-  startTime.setHours(9, 0, 0, 0); // Default start at 9 AM
+  const startTime = tournament.settings.startDateTime || tournament.scheduledStartTime || new Date();
+  
+  // If no tournament start time, default to 30 minutes from now
+  if (!tournament.settings.startDateTime && !tournament.scheduledStartTime) {
+    startTime.setTime(Date.now() + 30 * 60 * 1000); // 30 minutes from now
+  }
+  
+  // Ensure start time is set to a reasonable hour if it's just a date
+  if (startTime.getHours() === 0 && startTime.getMinutes() === 0) {
+    startTime.setHours(9, 0, 0, 0); // Default start at 9 AM if no time specified
+  }
 
   return {
     startTime,

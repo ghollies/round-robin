@@ -29,11 +29,13 @@ The application is a client-side only web application using local browser storag
 ### Frontend Components
 
 #### 1. Tournament Setup Component
-- **Purpose**: Configure tournament parameters, individual player entry, and automatic schedule generation
+- **Purpose**: Configure tournament parameters, individual player entry, tournament scheduling, and automatic schedule generation
 - **Key Features**:
-  - Parameter validation (players, courts, scoring rules)
+  - Parameter validation (players, courts, scoring rules, start date/time)
   - Individual player entry with duplicate detection
   - Tournament configuration (courts, time, scoring)
+  - Tournament start date/time selection with future date validation
+  - Default scheduling to next available time slot if no date specified
   - Automatic schedule generation upon completion
   - Seamless transition to schedule view
 
@@ -100,10 +102,12 @@ interface Tournament {
     pointLimit: number;
     scoringRule: 'win-by-2' | 'first-to-limit';
     timeLimit: boolean;
+    startDateTime?: Date; // Optional scheduled start time
   };
-  status: 'setup' | 'active' | 'completed';
+  status: 'setup' | 'scheduled' | 'active' | 'completed';
   createdAt: Date;
   updatedAt: Date;
+  scheduledStartTime?: Date; // When the tournament is scheduled to begin
 }
 ```
 

@@ -285,9 +285,7 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
       
       try {
         // Automatically generate schedule
-        const generatedSchedule = generateOptimizedSchedule(tournament, participants, {
-          startTime: new Date(Date.now() + 60000) // Start in 1 minute
-        });
+        const generatedSchedule = generateOptimizedSchedule(tournament, participants);
         
         // Ensure schedule was generated successfully
         if (!generatedSchedule || !generatedSchedule.teams) {

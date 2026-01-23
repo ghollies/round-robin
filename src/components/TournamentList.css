@@ -202,6 +202,12 @@
   border: 1px solid #f6e05e;
 }
 
+.status-scheduled {
+  background: #ebf8ff;
+  color: #3182ce;
+  border: 1px solid #90cdf4;
+}
+
 .status-active {
   background: #e6fffa;
   color: #319795;

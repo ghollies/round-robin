@@ -75,6 +75,7 @@ export const TournamentList: React.FC<TournamentListProps> = ({
   const getStatusBadge = (status: Tournament['status']) => {
     const statusConfig = {
       setup: { label: 'Setup', className: 'status-setup' },
+      scheduled: { label: 'Scheduled', className: 'status-scheduled' },
       active: { label: 'Active', className: 'status-active' },
       completed: { label: 'Completed', className: 'status-completed' }
     };
@@ -200,6 +201,12 @@ export const TournamentList: React.FC<TournamentListProps> = ({
                   <span className="detail-label">Created:</span>
                   <span className="detail-value">{formatDate(tournament.createdAt)}</span>
                 </div>
+                {tournament.scheduledStartTime && (
+                  <div className="detail-row">
+                    <span className="detail-label">Scheduled Start:</span>
+                    <span className="detail-value">{formatDate(tournament.scheduledStartTime)}</span>
+                  </div>
+                )}
 
                 {tournament.status !== 'setup' && (
                   <div className="detail-row">

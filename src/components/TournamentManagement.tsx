@@ -85,9 +85,7 @@ export const TournamentManagement: React.FC<TournamentManagementProps> = ({
     setScheduleError(null);
     
     try {
-      const generatedSchedule = generateOptimizedSchedule(tournament, participants, {
-        startTime: new Date(Date.now() + 60000) // Start in 1 minute
-      });
+      const generatedSchedule = generateOptimizedSchedule(tournament, participants);
       setSchedule(generatedSchedule);
       setCurrentView('schedule');
     } catch (error) {

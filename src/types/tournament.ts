@@ -8,10 +8,12 @@ export interface Tournament {
     pointLimit: number;
     scoringRule: 'win-by-2' | 'first-to-limit';
     timeLimit: boolean;
+    startDateTime?: Date; // Optional scheduled start time
   };
-  status: 'setup' | 'active' | 'completed';
+  status: 'setup' | 'scheduled' | 'active' | 'completed';
   createdAt: Date;
   updatedAt: Date;
+  scheduledStartTime?: Date; // When the tournament is scheduled to begin
 }
 
 export interface Participant {

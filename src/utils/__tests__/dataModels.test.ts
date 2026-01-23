@@ -19,7 +19,8 @@ import {
   validateTeam,
   validateMatch,
   validateParticipantCount,
-  validateUniqueParticipantNames
+  validateUniqueParticipantNames,
+  validateStartDateTime
 } from '../index';
 
 describe('ID Generation', () => {
@@ -342,5 +343,48 @@ describe('Unique Participant Names Validation', () => {
     const result = validateUniqueParticipantNames(participants);
     expect(result.isValid).toBe(false);
     expect(result.errors[0]).toContain('Duplicate participant name "john doe" found at positions 1 and 3');
+  });
+});
+
+describe('Start DateTime Validation', () => {
+  test('validates undefined start date/time as valid (optional)', () => {
+    const result = validateStartDateTime(undefined);
+    expect(result.isValid).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+
+  test('validates future date/time as valid', () => {
+    const futureDate = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    const result = validateStartDateTime(futureDate);
+    expect(result.isValid).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+
+  test('rejects past date/time', () => {
+    const pastDate = new Date(Date.now() - 60 * 1000); // 1 minute ago
+    const result = validateStartDateTime(pastDate);
+    expect(result.isValid).toBe(false);
+    expect(result.error).toContain('must be at least 5 minutes in the future');
+  });
+
+  test('rejects invalid date', () => {
+    const invalidDate = new Date('invalid');
+    const result = validateStartDateTime(invalidDate);
+    expect(result.isValid).toBe(false);
+    expect(result.error).toContain('must be a valid date');
+  });
+
+  test('warns for very soon start time', () => {
+    const soonDate = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    const result = validateStartDateTime(soonDate);
+    expect(result.isValid).toBe(true);
+    expect(result.warning).toContain('scheduled to start very soon');
+  });
+
+  test('warns for very far future start time', () => {
+    const farDate = new Date(Date.now() + 400 * 24 * 60 * 60 * 1000); // 400 days from now
+    const result = validateStartDateTime(farDate);
+    expect(result.isValid).toBe(true);
+    expect(result.warning).toContain('more than a year in the future');
   });
 });

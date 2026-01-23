@@ -282,3 +282,55 @@ describe('createDefaultScheduleSettings', () => {
     expect(settings.matchDuration).toBe(60);
   });
 });
+
+describe('Schedule Generation with Custom Start Times', () => {
+  test('should use tournament scheduled start time when available', () => {
+    const customStartTime = new Date('2024-06-15T14:30:00');
+    const tournament = createTournament('Test Tournament', 'individual-signup');
+    tournament.scheduledStartTime = customStartTime;
+    tournament.settings.startDateTime = customStartTime;
+    
+    const participants = Array.from({ length: 6 }, (_, i) => 
+      createParticipant(tournament.id, `Player ${i + 1}`)
+    );
+
+    const schedule = generateOptimizedSchedule(tournament, participants);
+    
+    expect(schedule.scheduledMatches.length).toBeGreaterThan(0);
+    expect(schedule.scheduledMatches[0].scheduledTime).toEqual(customStartTime);
+  });
+
+  test('should default to 30 minutes from now when no start time specified', () => {
+    const tournament = createTournament('Test Tournament', 'individual-signup');
+    const participants = Array.from({ length: 6 }, (_, i) => 
+      createParticipant(tournament.id, `Player ${i + 1}`)
+    );
+
+    const beforeGeneration = new Date(Date.now() + 25 * 60 * 1000); // 25 minutes from now
+    const schedule = generateOptimizedSchedule(tournament, participants);
+    const afterGeneration = new Date(Date.now() + 35 * 60 * 1000); // 35 minutes from now
+    
+    expect(schedule.scheduledMatches.length).toBeGreaterThan(0);
+    const firstMatchTime = schedule.scheduledMatches[0].scheduledTime;
+    expect(firstMatchTime.getTime()).toBeGreaterThan(beforeGeneration.getTime());
+    expect(firstMatchTime.getTime()).toBeLessThan(afterGeneration.getTime());
+  });
+
+  test('should set reasonable hour when only date is provided', () => {
+    const dateOnly = new Date('2024-06-15T00:00:00');
+    const tournament = createTournament('Test Tournament', 'individual-signup');
+    tournament.scheduledStartTime = dateOnly;
+    tournament.settings.startDateTime = dateOnly;
+    
+    const participants = Array.from({ length: 6 }, (_, i) => 
+      createParticipant(tournament.id, `Player ${i + 1}`)
+    );
+
+    const schedule = generateOptimizedSchedule(tournament, participants);
+    
+    expect(schedule.scheduledMatches.length).toBeGreaterThan(0);
+    const firstMatchTime = schedule.scheduledMatches[0].scheduledTime;
+    expect(firstMatchTime.getHours()).toBe(9); // Should default to 9 AM
+    expect(firstMatchTime.getMinutes()).toBe(0);
+  });
+});

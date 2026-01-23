@@ -6,7 +6,8 @@ import {
   validateCourtCount,
   validateMatchDuration,
   validatePointLimit,
-  validateParticipantName
+  validateParticipantName,
+  validateStartDateTime
 } from '../utils/validation';
 import { LoadingOverlay } from './LoadingState';
 import { usePerfMeasure } from '../utils/performance';
@@ -26,6 +27,7 @@ interface TournamentFormData {
   pointLimit: number;
   scoringRule: 'win-by-2' | 'first-to-limit';
   timeLimit: boolean;
+  startDateTime?: Date;
 }
 
 interface FormErrors {
@@ -94,6 +96,14 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
       newWarnings.pointLimit = pointValidation.warning;
     }
 
+    // Start date/time validation
+    const startDateTimeValidation = validateStartDateTime(formData.startDateTime);
+    if (!startDateTimeValidation.isValid && startDateTimeValidation.error) {
+      newErrors.startDateTime = startDateTimeValidation.error;
+    } else if (startDateTimeValidation.warning) {
+      newWarnings.startDateTime = startDateTimeValidation.warning;
+    }
+
     setErrors(newErrors);
     setWarnings(newWarnings);
     return Object.keys(newErrors).length === 0;
@@ -155,7 +165,8 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : 
-              type === 'number' ? parseInt(value) || 0 : value
+              type === 'number' ? parseInt(value) || 0 :
+              type === 'datetime-local' ? (value ? new Date(value) : undefined) : value
     }));
 
     // Clear error when user starts typing
@@ -166,6 +177,17 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
       }
       return prev;
     });
+  }, []);
+
+  // Helper function to format date for datetime-local input
+  const formatDateTimeLocal = useCallback((date?: Date): string => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }, []);
 
   const handleNext = useCallback(() => {
@@ -204,6 +226,11 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
     if (validateParticipants()) {
       setIsSubmitting(true);
       try {
+        // Determine start time and status
+        const now = new Date();
+        const startTime = formData.startDateTime || new Date(now.getTime() + 30 * 60 * 1000); // Default to 30 minutes from now
+        const status = formData.startDateTime && formData.startDateTime > now ? 'scheduled' : 'setup';
+
         const tournament: Tournament = {
           id: `tournament_${Date.now()}`,
           name: formData.name,
@@ -214,10 +241,12 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
             pointLimit: formData.pointLimit,
             scoringRule: formData.scoringRule,
             timeLimit: formData.timeLimit,
+            startDateTime: startTime,
           },
-          status: 'setup',
+          status,
           createdAt: new Date(),
           updatedAt: new Date(),
+          scheduledStartTime: startTime,
         };
 
         await onTournamentCreate(tournament, participants.map(name => name.trim()));
@@ -407,6 +436,23 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
             {errors.matchDuration && <span className="error-text">{errors.matchDuration}</span>}
             {warnings.matchDuration && <span className="warning-text">{warnings.matchDuration}</span>}
             <div className="help-text">Between 15 and 60 minutes</div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="startDateTime">Tournament Start Date & Time</label>
+            <input
+              type="datetime-local"
+              id="startDateTime"
+              name="startDateTime"
+              value={formatDateTimeLocal(formData.startDateTime)}
+              onChange={handleInputChange}
+              className={errors.startDateTime ? 'error' : ''}
+            />
+            {errors.startDateTime && <span className="error-text">{errors.startDateTime}</span>}
+            {warnings.startDateTime && <span className="warning-text">{warnings.startDateTime}</span>}
+            <div className="help-text">
+              Leave empty to start 30 minutes from now, or select a future date and time
+            </div>
           </div>
 
           <div className="form-group">

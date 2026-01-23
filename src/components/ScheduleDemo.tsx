@@ -34,9 +34,7 @@ const ScheduleDemo: React.FC = () => {
       ];
 
       // Generate optimized schedule
-      const generatedSchedule = generateOptimizedSchedule(tournament, participants, {
-        startTime: new Date(Date.now() + 60000) // Start in 1 minute
-      });
+      const generatedSchedule = generateOptimizedSchedule(tournament, participants);
 
       setSchedule(generatedSchedule);
     } catch (err) {

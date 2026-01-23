@@ -177,3 +177,15 @@
   - Ensure player names are clearly visible but don't overwhelm the round box design
   - Test with various name lengths and tournament sizes to ensure proper display
   - _Requirements: 7.10, 7.11_
+
+- [ ] 21. Add tournament start date/time scheduling functionality
+  - Add date/time picker input fields to tournament setup form
+  - Implement validation to ensure selected date/time is in the future
+  - Update Tournament interface to include scheduledStartTime field
+  - Modify schedule generation to use specified start time instead of current time + 1 minute
+  - Add default behavior to use current time + 30 minutes if no start time specified
+  - Update tournament status to include 'scheduled' state for future tournaments
+  - Modify tournament list to display scheduled start time for future tournaments
+  - Update schedule display to show actual tournament start time
+  - Add unit tests for date/time validation and schedule generation with custom start times
+  - _Requirements: 1.9, 1.10, 1.11, 1.12_

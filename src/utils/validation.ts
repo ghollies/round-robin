@@ -65,8 +65,8 @@ export function validateTournament(tournament: Partial<Tournament>): ValidationR
     }
   }
 
-  if (!tournament.status || !['setup', 'active', 'completed'].includes(tournament.status)) {
-    errors.push('Tournament status must be "setup", "active", or "completed"');
+  if (!tournament.status || !['setup', 'scheduled', 'active', 'completed'].includes(tournament.status)) {
+    errors.push('Tournament status must be "setup", "scheduled", "active", or "completed"');
   }
 
   return {
@@ -557,6 +557,44 @@ export function validateScore(score: number, pointLimit: number): FieldValidatio
   return { isValid: true };
 }
 
+export function validateStartDateTime(startDateTime?: Date): FieldValidationResult {
+  if (!startDateTime) {
+    // Optional field - return valid if not provided
+    return { isValid: true };
+  }
+  
+  if (!(startDateTime instanceof Date) || isNaN(startDateTime.getTime())) {
+    return { isValid: false, error: 'Start date/time must be a valid date' };
+  }
+  
+  const now = new Date();
+  const minStartTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes from now
+  
+  if (startDateTime < minStartTime) {
+    return { isValid: false, error: 'Tournament start time must be at least 5 minutes in the future' };
+  }
+  
+  // Warning for tournaments scheduled very far in the future
+  const maxReasonableTime = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
+  if (startDateTime > maxReasonableTime) {
+    return { 
+      isValid: true, 
+      warning: 'Tournament is scheduled more than a year in the future' 
+    };
+  }
+  
+  // Warning for tournaments scheduled very soon
+  const soonTime = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+  if (startDateTime < soonTime) {
+    return { 
+      isValid: true, 
+      warning: 'Tournament is scheduled to start very soon - ensure participants have enough notice' 
+    };
+  }
+  
+  return { isValid: true };
+}
+
 // Storage validation functions
 export function validateStorageQuota(): FieldValidationResult {
   try {
@@ -659,6 +697,7 @@ export const tournamentSetupValidationRules = {
     validateCourtCount(count, context?.participantCount),
   matchDuration: (duration: number) => validateMatchDuration(duration),
   pointLimit: (limit: number) => validatePointLimit(limit),
+  startDateTime: (startDateTime?: Date) => validateStartDateTime(startDateTime),
 };
 
 // Participant entry validation rules
