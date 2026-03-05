@@ -79,6 +79,7 @@
 
 .form-group input[type="text"],
 .form-group input[type="number"],
+.form-group input[type="datetime-local"],
 .form-group select {
   width: 100%;
   padding: var(--spacing-3) var(--spacing-4);
@@ -94,6 +95,7 @@
 
 .form-group input[type="text"]:focus,
 .form-group input[type="number"]:focus,
+.form-group input[type="datetime-local"]:focus,
 .form-group select:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -162,6 +164,78 @@
   border-top: 1px solid var(--color-border-light);
 }
 
+/* Advanced Section */
+.advanced-section {
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--spacing-5);
+}
+
+.advanced-toggle {
+  width: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--border-radius-base);
+  padding: var(--spacing-4);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  transition: all var(--transition-base);
+  min-height: 44px;
+}
+
+.advanced-toggle:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-primary);
+}
+
+.advanced-toggle:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.toggle-icon {
+  display: inline-block;
+  transition: transform var(--transition-base);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.toggle-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.advanced-content {
+  margin-top: var(--spacing-5);
+  padding-top: var(--spacing-5);
+  border-top: 1px solid var(--color-border-light);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .advanced-content {
+    animation: none;
+  }
+  
+  .toggle-icon {
+    transition: none;
+  }
+}
+
 .btn-primary,
 .btn-secondary {
   padding: var(--spacing-3) var(--spacing-6);
@@ -216,6 +290,142 @@
   box-shadow: var(--shadow-lg);
   padding: var(--spacing-8);
   border: 1px solid var(--color-border-light);
+}
+
+/* Entry Mode Tabs */
+.entry-mode-tabs {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-6);
+  border-bottom: 2px solid var(--color-border-light);
+}
+
+.tab-button {
+  padding: var(--spacing-3) var(--spacing-6);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  bottom: -2px;
+}
+
+.tab-button:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+}
+
+.tab-button.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* Bulk Entry Container */
+.bulk-entry-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+}
+
+.bulk-entry-input,
+.bulk-entry-preview {
+  display: flex;
+  flex-direction: column;
+}
+
+.bulk-entry-input label {
+  display: block;
+  margin-bottom: var(--spacing-2);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.bulk-textarea {
+  width: 100%;
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--border-radius-base);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  resize: vertical;
+  min-height: 300px;
+  line-height: var(--line-height-relaxed);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.bulk-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha);
+}
+
+.bulk-entry-preview h4 {
+  margin-bottom: var(--spacing-3);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.preview-list {
+  list-style: decimal;
+  padding-left: var(--spacing-6);
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-base);
+  padding: var(--spacing-4);
+  background: var(--color-bg-secondary);
+}
+
+.preview-list li {
+  padding: var(--spacing-2) 0;
+  color: var(--color-text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-list li.error {
+  color: var(--color-danger);
+}
+
+.error-badge {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--border-radius-sm);
+  margin-left: var(--spacing-2);
+}
+
+.preview-empty {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-8);
+  border: 1px dashed var(--color-border-medium);
+  border-radius: var(--border-radius-base);
+  background: var(--color-bg-secondary);
+}
+
+.preview-warning {
+  margin-top: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: var(--color-warning-light);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--border-radius-base);
+  color: var(--color-warning-dark);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .participants-grid {
@@ -283,6 +493,11 @@
     gap: var(--spacing-4);
   }
   
+  .bulk-entry-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-5);
+  }
+  
   .form-actions {
     flex-direction: column-reverse;
     gap: var(--spacing-3);
@@ -327,6 +542,7 @@
   
   .form-group input[type="text"],
   .form-group input[type="number"],
+  .form-group input[type="datetime-local"],
   .form-group select,
   .participant-input-group input {
     border: 2px solid var(--color-border-dark);
@@ -341,6 +557,7 @@
 @media (prefers-reduced-motion: reduce) {
   .form-group input[type="text"],
   .form-group input[type="number"],
+  .form-group input[type="datetime-local"],
   .form-group select,
   .participant-input-group input,
   .btn-primary,

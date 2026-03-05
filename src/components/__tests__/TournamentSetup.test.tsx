@@ -10,25 +10,37 @@ describe('TournamentSetup Component', () => {
   });
 
   describe('Initial Form Rendering', () => {
-    it('renders tournament setup form with all required fields', () => {
+    it('renders tournament setup form with all required fields', async () => {
+      const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
       expect(screen.getByLabelText(/tournament name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/tournament mode/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/number of players/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/number of courts/i)).toBeInTheDocument();
+      
+      // Expand advanced section to see other fields
+      const advancedButton = screen.getByRole('button', { name: /advanced settings/i });
+      await user.click(advancedButton);
+      
       expect(screen.getByLabelText(/match duration/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/point limit/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/win condition/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/enable time limits/i)).toBeInTheDocument();
     });
 
-    it('has default values set correctly', () => {
+    it('has default values set correctly', async () => {
+      const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
       expect(screen.getByRole('combobox', { name: /tournament mode/i })).toHaveValue('individual-signup');
       expect(screen.getByDisplayValue('8')).toBeInTheDocument(); // participant count
       expect(screen.getByDisplayValue('2')).toBeInTheDocument(); // court count
+      
+      // Expand advanced section to see other fields
+      const advancedButton = screen.getByRole('button', { name: /advanced settings/i });
+      await user.click(advancedButton);
+      
       expect(screen.getByDisplayValue('20')).toBeInTheDocument(); // match duration
       expect(screen.getByDisplayValue('11')).toBeInTheDocument(); // point limit
       expect(screen.getByRole('combobox', { name: /win condition/i })).toHaveValue('win-by-2');
@@ -45,6 +57,32 @@ describe('TournamentSetup Component', () => {
       // Switch to pair signup mode
       await user.selectOptions(screen.getByLabelText(/tournament mode/i), 'pair-signup');
       expect(screen.getByText(/teams of 2 players sign up together/i)).toBeInTheDocument();
+    });
+
+    it('toggles advanced section visibility', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      // Advanced section should be collapsed by default
+      expect(screen.queryByLabelText(/match duration/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/point limit/i)).not.toBeInTheDocument();
+      
+      // Expand advanced section
+      const advancedButton = screen.getByRole('button', { name: /advanced settings/i });
+      await user.click(advancedButton);
+      
+      // Fields should now be visible
+      expect(screen.getByLabelText(/match duration/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/point limit/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/win condition/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/enable time limits/i)).toBeInTheDocument();
+      
+      // Collapse advanced section
+      await user.click(advancedButton);
+      
+      // Fields should be hidden again
+      expect(screen.queryByLabelText(/match duration/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/point limit/i)).not.toBeInTheDocument();
     });
   });
 
@@ -105,6 +143,11 @@ describe('TournamentSetup Component', () => {
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
       await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      
+      // Expand advanced section
+      const advancedButton = screen.getByRole('button', { name: /advanced settings/i });
+      await user.click(advancedButton);
+      
       await user.clear(screen.getByLabelText(/match duration/i));
       await user.type(screen.getByLabelText(/match duration/i), '10');
       
@@ -119,6 +162,11 @@ describe('TournamentSetup Component', () => {
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
       await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      
+      // Expand advanced section
+      const advancedButton = screen.getByRole('button', { name: /advanced settings/i });
+      await user.click(advancedButton);
+      
       await user.clear(screen.getByLabelText(/point limit/i));
       await user.type(screen.getByLabelText(/point limit/i), '0');
       
@@ -144,6 +192,153 @@ describe('TournamentSetup Component', () => {
   });
 
   describe('Participant Entry', () => {
+    it('shows bulk entry tab by default', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      // Check that bulk entry tab is active by default
+      expect(screen.getByRole('button', { name: /bulk entry/i })).toHaveClass('active');
+      expect(screen.getByLabelText(/enter names/i)).toBeInTheDocument();
+    });
+
+    it('switches between bulk and individual entry tabs', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      // Should start on bulk entry
+      expect(screen.getByLabelText(/enter names/i)).toBeInTheDocument();
+      
+      // Switch to individual entry
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
+      expect(screen.getAllByLabelText(/player \d+/i)).toHaveLength(8);
+      
+      // Switch back to bulk entry
+      await user.click(screen.getByRole('button', { name: /bulk entry/i }));
+      expect(screen.getByLabelText(/enter names/i)).toBeInTheDocument();
+    });
+
+    it('parses comma-separated names in bulk entry', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, 'John Doe, Jane Smith, Bob Johnson, Alice Brown');
+      
+      // Check preview shows 4 names
+      expect(screen.getByText(/preview \(4 players\)/i)).toBeInTheDocument();
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    });
+
+    it('parses newline-separated names in bulk entry', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '3');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, 'John Doe\nJane Smith\nBob Johnson');
+      
+      // Check preview shows 3 names
+      expect(screen.getByText(/preview \(3 players\)/i)).toBeInTheDocument();
+    });
+
+    it('removes leading numbers from bulk entry names', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, '1. bill\n2. sasdaa\n3. sdfs\n4. ds');
+      
+      // Check preview shows names without numbers
+      expect(screen.getByText('bill')).toBeInTheDocument();
+      expect(screen.getByText('sasdaa')).toBeInTheDocument();
+      expect(screen.getByText('sdfs')).toBeInTheDocument();
+      expect(screen.getByText('ds')).toBeInTheDocument();
+      
+      // Create tournament and verify names are stored without numbers
+      const createButton = screen.getByRole('button', { name: /create tournament/i });
+      await user.click(createButton);
+      
+      expect(mockOnTournamentCreate).toHaveBeenCalledWith(
+        expect.anything(),
+        ['bill', 'sasdaa', 'sdfs', 'ds']
+      );
+    });
+
+    it('creates tournament with bulk entry names', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, 'John Doe, Jane Smith, Bob Johnson, Alice Brown');
+      
+      const createButton = screen.getByRole('button', { name: /create tournament/i });
+      await user.click(createButton);
+      
+      expect(mockOnTournamentCreate).toHaveBeenCalledWith(
+        expect.anything(),
+        ['John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Brown']
+      );
+    });
+
+    it('validates participant count in bulk entry', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, 'John Doe, Jane Smith'); // Only 2 names
+      
+      const createButton = screen.getByRole('button', { name: /create tournament/i });
+      await user.click(createButton);
+      
+      expect(screen.getByText(/expected 4 players, but found 2/i)).toBeInTheDocument();
+    });
+
     it('pre-populates participant input fields with default text values', async () => {
       const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
@@ -154,6 +349,9 @@ describe('TournamentSetup Component', () => {
       
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
+      
+      // Switch to individual entry tab
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       
       // Check that input fields are pre-populated with default values
       expect(screen.getByDisplayValue('Player 1')).toBeInTheDocument();
@@ -172,6 +370,9 @@ describe('TournamentSetup Component', () => {
       
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
+      
+      // Switch to individual entry tab
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       
       // Submit without changing the pre-populated values
       const createButton = screen.getByRole('button', { name: /create tournament/i });
@@ -195,6 +396,9 @@ describe('TournamentSetup Component', () => {
       await user.click(nextButton);
       
       expect(screen.getByText(/enter player names/i)).toBeInTheDocument();
+      
+      // Switch to individual entry to see the fields
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       expect(screen.getAllByLabelText(/player \d+/i)).toHaveLength(4);
     });
 
@@ -211,10 +415,13 @@ describe('TournamentSetup Component', () => {
       await user.click(nextButton);
       
       expect(screen.getByText(/enter team names/i)).toBeInTheDocument();
+      
+      // Switch to individual entry to see the fields
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       expect(screen.getAllByLabelText(/team \d+/i)).toHaveLength(4);
     });
 
-    it('validates required participant names', async () => {
+    it('validates required participant names in individual entry', async () => {
       const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
@@ -224,6 +431,9 @@ describe('TournamentSetup Component', () => {
       
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
+      
+      // Switch to individual entry tab
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       
       // Clear the pre-populated values to test validation
       const playerInputs = screen.getAllByLabelText(/player \d+/i);
@@ -237,7 +447,7 @@ describe('TournamentSetup Component', () => {
       expect(screen.getAllByText(/name is required/i)).toHaveLength(4);
     });
 
-    it('detects duplicate participant names', async () => {
+    it('detects duplicate participant names in bulk entry', async () => {
       const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
@@ -247,6 +457,29 @@ describe('TournamentSetup Component', () => {
       
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
+      
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, 'John Doe, Jane Smith, john doe, Bob Johnson'); // Duplicate
+      
+      const createButton = screen.getByRole('button', { name: /create tournament/i });
+      await user.click(createButton);
+      
+      expect(screen.getByText(/all participant names must be unique/i)).toBeInTheDocument();
+    });
+
+    it('detects duplicate participant names in individual entry', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      // Switch to individual entry tab
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       
       const playerInputs = screen.getAllByLabelText(/player \d+/i);
       // Clear pre-populated values and enter new ones
@@ -283,7 +516,7 @@ describe('TournamentSetup Component', () => {
       expect(screen.getByDisplayValue('Test Tournament')).toBeInTheDocument();
     });
 
-    it('clears participant errors when user types', async () => {
+    it('clears participant errors when user types in individual entry', async () => {
       const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
@@ -293,6 +526,9 @@ describe('TournamentSetup Component', () => {
       
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
+      
+      // Switch to individual entry tab
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       
       // Clear the pre-populated values to test validation
       const playerInputs = screen.getAllByLabelText(/player \d+/i);
@@ -313,7 +549,7 @@ describe('TournamentSetup Component', () => {
   });
 
   describe('Tournament Creation', () => {
-    it('creates tournament with valid data', async () => {
+    it('creates tournament with valid data using bulk entry', async () => {
       const user = userEvent.setup();
       render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
       
@@ -324,6 +560,11 @@ describe('TournamentSetup Component', () => {
       await user.type(screen.getByLabelText(/number of players/i), '4');
       await user.clear(screen.getByLabelText(/number of courts/i));
       await user.type(screen.getByLabelText(/number of courts/i), '2');
+      
+      // Expand advanced section
+      const advancedButton = screen.getByRole('button', { name: /advanced settings/i });
+      await user.click(advancedButton);
+      
       await user.clear(screen.getByLabelText(/match duration/i));
       await user.type(screen.getByLabelText(/match duration/i), '25');
       await user.clear(screen.getByLabelText(/point limit/i));
@@ -333,6 +574,64 @@ describe('TournamentSetup Component', () => {
       
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
+      
+      // Use bulk entry (default)
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, 'John Doe, Jane Smith, Bob Johnson, Alice Brown');
+      
+      const createButton = screen.getByRole('button', { name: /create tournament/i });
+      await user.click(createButton);
+      
+      expect(mockOnTournamentCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Test Tournament',
+          mode: 'individual-signup',
+          settings: expect.objectContaining({
+            courtCount: 2,
+            matchDuration: 25,
+            pointLimit: 15,
+            scoringRule: 'first-to-limit',
+            timeLimit: false,
+            startDateTime: expect.any(Date),
+          }),
+          status: 'setup',
+          id: expect.any(String),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          scheduledStartTime: expect.any(Date),
+        }),
+        ['John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Brown']
+      );
+    });
+
+    it('creates tournament with valid data using individual entry', async () => {
+      const user = userEvent.setup();
+      render(<TournamentSetup onTournamentCreate={mockOnTournamentCreate} />);
+      
+      // Fill tournament setup
+      await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
+      await user.selectOptions(screen.getByLabelText(/tournament mode/i), 'individual-signup');
+      await user.clear(screen.getByLabelText(/number of players/i));
+      await user.type(screen.getByLabelText(/number of players/i), '4');
+      await user.clear(screen.getByLabelText(/number of courts/i));
+      await user.type(screen.getByLabelText(/number of courts/i), '2');
+      
+      // Expand advanced section
+      const advancedButton = screen.getByRole('button', { name: /advanced settings/i });
+      await user.click(advancedButton);
+      
+      await user.clear(screen.getByLabelText(/match duration/i));
+      await user.type(screen.getByLabelText(/match duration/i), '25');
+      await user.clear(screen.getByLabelText(/point limit/i));
+      await user.type(screen.getByLabelText(/point limit/i), '15');
+      await user.selectOptions(screen.getByLabelText(/win condition/i), 'first-to-limit');
+      await user.click(screen.getByLabelText(/enable time limits/i)); // Uncheck
+      
+      const nextButton = screen.getByRole('button', { name: /next: enter players/i });
+      await user.click(nextButton);
+      
+      // Switch to individual entry
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       
       // Fill participant names - clear pre-populated values first
       const playerInputs = screen.getAllByLabelText(/player \d+/i);
@@ -382,16 +681,9 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter teams/i });
       await user.click(nextButton);
       
-      const teamInputs = screen.getAllByLabelText(/team \d+/i);
-      // Clear pre-populated values and enter new ones
-      await user.clear(teamInputs[0]);
-      await user.type(teamInputs[0], 'Smith/Johnson');
-      await user.clear(teamInputs[1]);
-      await user.type(teamInputs[1], 'Brown/Davis');
-      await user.clear(teamInputs[2]);
-      await user.type(teamInputs[2], 'Wilson/Miller');
-      await user.clear(teamInputs[3]);
-      await user.type(teamInputs[3], 'Taylor/Anderson');
+      // Use bulk entry
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, 'Smith/Johnson\nBrown/Davis\nWilson/Miller\nTaylor/Anderson');
       
       const createButton = screen.getByRole('button', { name: /create tournament/i });
       await user.click(createButton);
@@ -419,16 +711,9 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
-      const playerInputs = screen.getAllByLabelText(/player \d+/i);
-      // Clear pre-populated values and enter new ones with whitespace
-      await user.clear(playerInputs[0]);
-      await user.type(playerInputs[0], '  John Doe  ');
-      await user.clear(playerInputs[1]);
-      await user.type(playerInputs[1], ' Jane Smith ');
-      await user.clear(playerInputs[2]);
-      await user.type(playerInputs[2], 'Bob Johnson');
-      await user.clear(playerInputs[3]);
-      await user.type(playerInputs[3], '  Alice Brown');
+      // Use bulk entry with extra whitespace
+      const textarea = screen.getByLabelText(/enter names/i);
+      await user.type(textarea, '  John Doe  , Jane Smith , Bob Johnson,  Alice Brown');
       
       const createButton = screen.getByRole('button', { name: /create tournament/i });
       await user.click(createButton);
@@ -467,6 +752,9 @@ describe('TournamentSetup Component', () => {
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
+      // Switch to individual entry to see placeholders
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
+      
       const playerInputs = screen.getAllByPlaceholderText(/player name/i);
       expect(playerInputs).toHaveLength(8); // Default participant count
       
@@ -475,6 +763,9 @@ describe('TournamentSetup Component', () => {
       // Pair signup mode
       await user.selectOptions(screen.getByLabelText(/tournament mode/i), 'pair-signup');
       await user.click(screen.getByRole('button', { name: /next: enter teams/i }));
+      
+      // Switch to individual entry to see placeholders
+      await user.click(screen.getByRole('button', { name: /individual entry/i }));
       
       const teamInputs = screen.getAllByPlaceholderText(/smith\/johnson/i);
       expect(teamInputs).toHaveLength(8); // Default participant count

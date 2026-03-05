@@ -69,7 +69,7 @@ export function AppContent() {
     return (
       <>
         <header className="App-header">
-          <h1>Pickleball Tournament Scheduler</h1>
+          <h1>Pickleball Round Robin Scheduler</h1>
           <p>Create and manage round-robin doubles tournaments</p>
         </header>
         <main id="main-content" className="container">
@@ -121,7 +121,7 @@ export function AppContent() {
     return (
       <>
         <header className="App-header">
-          <h1>Pickleball Tournament Scheduler</h1>
+          <h1>Pickleball Round Robin Scheduler</h1>
           <p>Create and manage round-robin doubles tournaments with individual player signup</p>
         </header>
         <main id="main-content" className="container">
@@ -140,7 +140,7 @@ export function AppContent() {
   return (
     <>
       <header className="App-header">
-        <h1>Pickleball Tournament Scheduler</h1>
+        <h1>Pickleball Round Robin Scheduler</h1>
         <p>Create and manage round-robin doubles tournaments with individual player signup</p>
       </header>
       <main id="main-content" className="container">

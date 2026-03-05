@@ -54,6 +54,9 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
   const [warnings, setWarnings] = useState<FormErrors>({});
   const [showParticipantEntry, setShowParticipantEntry] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [entryMode, setEntryMode] = useState<'bulk' | 'individual'>('bulk');
+  const [bulkText, setBulkText] = useState('');
 
   // Memoized validation functions to avoid recalculation
   const validateForm = useCallback((): boolean => {
@@ -204,6 +207,34 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
   const handleBack = useCallback(() => {
     setShowParticipantEntry(false);
     setParticipants([]);
+    setBulkText('');
+    setEntryMode('bulk');
+  }, []);
+
+  // Parse bulk text into individual names
+  const parseBulkText = useCallback((text: string): string[] => {
+    // Split by newlines or commas, trim whitespace, and filter empty strings
+    return text
+      .split(/[\n,]+/)
+      .map(name => {
+        // Trim whitespace
+        let cleaned = name.trim();
+        // Remove leading numbers and periods (e.g., "1. John Doe" -> "John Doe")
+        cleaned = cleaned.replace(/^\d+\.\s*/, '');
+        return cleaned;
+      })
+      .filter(name => name.length > 0);
+  }, []);
+
+  // Memoized parsed names from bulk text
+  const parsedNames = useMemo(() => {
+    return parseBulkText(bulkText);
+  }, [bulkText, parseBulkText]);
+
+  const handleBulkTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setBulkText(e.target.value);
+    // Clear errors when user types
+    setErrors({});
   }, []);
 
   const handleParticipantChange = useCallback((index: number, value: string) => {
@@ -223,7 +254,61 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
   }, []);
 
   const handleCreateTournament = useCallback(async () => {
-    if (validateParticipants()) {
+    // Get participants based on entry mode
+    const finalParticipants = entryMode === 'bulk' ? parsedNames : participants;
+    
+    // Validate participants
+    const newErrors: FormErrors = {};
+    const newWarnings: FormErrors = {};
+    const existingNames: string[] = [];
+
+    // Enhanced participant validation
+    finalParticipants.forEach((name, index) => {
+      const validation = validateParticipantName(name, existingNames, formData.mode);
+      
+      if (!validation.isValid && validation.error) {
+        newErrors[`participant_${index}`] = validation.error;
+      } else if (validation.warning) {
+        newWarnings[`participant_${index}`] = validation.warning;
+      }
+      
+      // Add to existing names if valid
+      if (validation.isValid && name.trim()) {
+        existingNames.push(name.trim());
+      }
+    });
+
+    // Check for duplicates globally
+    const nameMap = new Map<string, number[]>();
+    finalParticipants.forEach((name, index) => {
+      const normalizedName = name.trim().toLowerCase();
+      if (normalizedName) {
+        if (!nameMap.has(normalizedName)) {
+          nameMap.set(normalizedName, []);
+        }
+        nameMap.get(normalizedName)!.push(index);
+      }
+    });
+
+    // Mark duplicates
+    nameMap.forEach((indices, name) => {
+      if (indices.length > 1) {
+        indices.forEach(index => {
+          newErrors[`participant_${index}`] = 'Duplicate name detected';
+        });
+        newErrors.duplicates = 'All participant names must be unique';
+      }
+    });
+
+    // Check if we have the right number of participants
+    if (finalParticipants.length !== formData.participantCount) {
+      newErrors.count = `Expected ${formData.participantCount} ${formData.mode === 'pair-signup' ? 'teams' : 'players'}, but found ${finalParticipants.length}`;
+    }
+
+    setErrors(newErrors);
+    setWarnings(newWarnings);
+
+    if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
       try {
         // Determine start time and status
@@ -249,7 +334,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
           scheduledStartTime: startTime,
         };
 
-        await onTournamentCreate(tournament, participants.map(name => name.trim()));
+        await onTournamentCreate(tournament, finalParticipants.map(name => name.trim()));
       } catch (error) {
         // Error handling is done by the parent component
         console.error('Tournament creation failed:', error);
@@ -257,7 +342,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
         setIsSubmitting(false);
       }
     }
-  }, [validateParticipants, formData, participants, onTournamentCreate]);
+  }, [entryMode, parsedNames, participants, formData, onTournamentCreate]);
 
   // Memoized help text to avoid recalculation
   const modeHelpText = useMemo(() => {
@@ -318,10 +403,76 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
               {errors.duplicates}
             </div>
           )}
+          {errors.count && (
+            <div className="error-message global-error">
+              {errors.count}
+            </div>
+          )}
 
-          <div className="participants-grid">
-            {participantInputs}
+          <div className="entry-mode-tabs">
+            <button
+              type="button"
+              className={`tab-button ${entryMode === 'bulk' ? 'active' : ''}`}
+              onClick={() => setEntryMode('bulk')}
+            >
+              Bulk Entry
+            </button>
+            <button
+              type="button"
+              className={`tab-button ${entryMode === 'individual' ? 'active' : ''}`}
+              onClick={() => setEntryMode('individual')}
+            >
+              Individual Entry
+            </button>
           </div>
+
+          {entryMode === 'bulk' ? (
+            <div className="bulk-entry-container">
+              <div className="bulk-entry-input">
+                <label htmlFor="bulkText">
+                  Enter names (one per line or comma-separated)
+                </label>
+                <textarea
+                  id="bulkText"
+                  value={bulkText}
+                  onChange={handleBulkTextChange}
+                  placeholder={`Enter ${formData.mode === 'pair-signup' ? 'team' : 'player'} names...\nExample:\nJohn Doe\nJane Smith\nBob Johnson`}
+                  rows={10}
+                  className="bulk-textarea"
+                />
+                <div className="help-text">
+                  Separate names with commas or new lines
+                </div>
+              </div>
+
+              <div className="bulk-entry-preview">
+                <h4>Preview ({parsedNames.length} {formData.mode === 'pair-signup' ? 'teams' : 'players'})</h4>
+                {parsedNames.length > 0 ? (
+                  <ol className="preview-list">
+                    {parsedNames.map((name, index) => (
+                      <li key={index} className={errors[`participant_${index}`] ? 'error' : ''}>
+                        {name}
+                        {errors[`participant_${index}`] && (
+                          <span className="error-badge">{errors[`participant_${index}`]}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="preview-empty">No names entered yet</p>
+                )}
+                {parsedNames.length !== formData.participantCount && parsedNames.length > 0 && (
+                  <div className="preview-warning">
+                    Expected {formData.participantCount} {formData.mode === 'pair-signup' ? 'teams' : 'players'}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="participants-grid">
+              {participantInputs}
+            </div>
+          )}
 
           <div className="form-actions">
             <button type="button" onClick={handleBack} className="btn-secondary">
@@ -399,11 +550,7 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
             {errors.participantCount && <span className="error-text">{errors.participantCount}</span>}
             <div className="help-text">Between 4 and 32 participants</div>
           </div>
-        </div>
 
-        <div className="form-section">
-          <h3>Court & Timing</h3>
-          
           <div className="form-group">
             <label htmlFor="courtCount">Number of Courts *</label>
             <input
@@ -420,91 +567,102 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onTournamentCreate, o
             {warnings.courtCount && <span className="warning-text">{warnings.courtCount}</span>}
             <div className="help-text">Between 1 and 16 courts</div>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="matchDuration">Match Duration (minutes) *</label>
-            <input
-              type="number"
-              id="matchDuration"
-              name="matchDuration"
-              value={formData.matchDuration}
-              onChange={handleInputChange}
-              min="15"
-              max="60"
-              className={errors.matchDuration ? 'error' : ''}
-            />
-            {errors.matchDuration && <span className="error-text">{errors.matchDuration}</span>}
-            {warnings.matchDuration && <span className="warning-text">{warnings.matchDuration}</span>}
-            <div className="help-text">Between 15 and 60 minutes</div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="startDateTime">Tournament Start Date & Time</label>
-            <input
-              type="datetime-local"
-              id="startDateTime"
-              name="startDateTime"
-              value={formatDateTimeLocal(formData.startDateTime)}
-              onChange={handleInputChange}
-              className={errors.startDateTime ? 'error' : ''}
-            />
-            {errors.startDateTime && <span className="error-text">{errors.startDateTime}</span>}
-            {warnings.startDateTime && <span className="warning-text">{warnings.startDateTime}</span>}
-            <div className="help-text">
-              Leave empty to start 30 minutes from now, or select a future date and time
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>
-              <input
-                type="checkbox"
-                name="timeLimit"
-                checked={formData.timeLimit}
-                onChange={handleInputChange}
-              />
-              Enable time limits for matches
-            </label>
-            <div className="help-text">
-              Matches can end when time expires, even if point limit isn't reached
-            </div>
-          </div>
         </div>
 
-        <div className="form-section">
-          <h3>Scoring Rules</h3>
+        <div className="form-section advanced-section">
+          <button 
+            type="button" 
+            className="advanced-toggle"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            <span className={`toggle-icon ${showAdvanced ? 'expanded' : ''}`}>▶</span>
+            Advanced Settings
+          </button>
           
-          <div className="form-group">
-            <label htmlFor="pointLimit">Point Limit *</label>
-            <input
-              type="number"
-              id="pointLimit"
-              name="pointLimit"
-              value={formData.pointLimit}
-              onChange={handleInputChange}
-              min="1"
-              className={errors.pointLimit ? 'error' : ''}
-            />
-            {errors.pointLimit && <span className="error-text">{errors.pointLimit}</span>}
-            {warnings.pointLimit && <span className="warning-text">{warnings.pointLimit}</span>}
-            <div className="help-text">Points needed to win a game (e.g., 11, 15, 21)</div>
-          </div>
+          {showAdvanced && (
+            <div className="advanced-content">
+              <div className="form-group">
+                <label htmlFor="matchDuration">Match Duration (minutes) *</label>
+                <input
+                  type="number"
+                  id="matchDuration"
+                  name="matchDuration"
+                  value={formData.matchDuration}
+                  onChange={handleInputChange}
+                  min="15"
+                  max="60"
+                  className={errors.matchDuration ? 'error' : ''}
+                />
+                {errors.matchDuration && <span className="error-text">{errors.matchDuration}</span>}
+                {warnings.matchDuration && <span className="warning-text">{warnings.matchDuration}</span>}
+                <div className="help-text">Between 15 and 60 minutes</div>
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="scoringRule">Win Condition *</label>
-            <select
-              id="scoringRule"
-              name="scoringRule"
-              value={formData.scoringRule}
-              onChange={handleInputChange}
-            >
-              <option value="win-by-2">Win by 2</option>
-              <option value="first-to-limit">First to Point Limit</option>
-            </select>
-            <div className="help-text">
-              {scoringHelpText}
+              <div className="form-group">
+                <label htmlFor="startDateTime">Tournament Start Date & Time</label>
+                <input
+                  type="datetime-local"
+                  id="startDateTime"
+                  name="startDateTime"
+                  value={formatDateTimeLocal(formData.startDateTime)}
+                  onChange={handleInputChange}
+                  className={errors.startDateTime ? 'error' : ''}
+                />
+                {errors.startDateTime && <span className="error-text">{errors.startDateTime}</span>}
+                {warnings.startDateTime && <span className="warning-text">{warnings.startDateTime}</span>}
+                <div className="help-text">
+                  Leave empty to start 30 minutes from now, or select a future date and time
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="timeLimit"
+                    checked={formData.timeLimit}
+                    onChange={handleInputChange}
+                  />
+                  Enable time limits for matches
+                </label>
+                <div className="help-text">
+                  Matches can end when time expires, even if point limit isn't reached
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="pointLimit">Point Limit *</label>
+                <input
+                  type="number"
+                  id="pointLimit"
+                  name="pointLimit"
+                  value={formData.pointLimit}
+                  onChange={handleInputChange}
+                  min="1"
+                  className={errors.pointLimit ? 'error' : ''}
+                />
+                {errors.pointLimit && <span className="error-text">{errors.pointLimit}</span>}
+                {warnings.pointLimit && <span className="warning-text">{warnings.pointLimit}</span>}
+                <div className="help-text">Points needed to win a game (e.g., 11, 15, 21)</div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="scoringRule">Win Condition *</label>
+                <select
+                  id="scoringRule"
+                  name="scoringRule"
+                  value={formData.scoringRule}
+                  onChange={handleInputChange}
+                >
+                  <option value="win-by-2">Win by 2</option>
+                  <option value="first-to-limit">First to Point Limit</option>
+                </select>
+                <div className="help-text">
+                  {scoringHelpText}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="form-actions">

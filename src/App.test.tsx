@@ -17,9 +17,9 @@ jest.mock('./utils/storage', () => ({
   getStandings: jest.fn(() => []),
 }));
 
-test('renders pickleball tournament scheduler heading', () => {
+test('renders pickleball round robin scheduler heading', () => {
   render(<App />);
-  const headingElement = screen.getByRole('heading', { name: /Pickleball Tournament Scheduler/i });
+  const headingElement = screen.getByRole('heading', { name: /Pickleball Round Robin Scheduler/i });
   expect(headingElement).toBeInTheDocument();
 });
 
