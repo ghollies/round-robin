@@ -254,16 +254,16 @@ describe('TournamentSetup Component', () => {
       
       await user.type(screen.getByLabelText(/tournament name/i), 'Test Tournament');
       await user.clear(screen.getByLabelText(/number of players/i));
-      await user.type(screen.getByLabelText(/number of players/i), '3');
+      await user.type(screen.getByLabelText(/number of players/i), '4');
       
       const nextButton = screen.getByRole('button', { name: /next: enter players/i });
       await user.click(nextButton);
       
       const textarea = screen.getByLabelText(/enter names/i);
-      await user.type(textarea, 'John Doe\nJane Smith\nBob Johnson');
+      await user.type(textarea, 'John Doe\nJane Smith\nBob Johnson\nAlice Cooper');
       
-      // Check preview shows 3 names
-      expect(screen.getByText(/preview \(3 players\)/i)).toBeInTheDocument();
+      // Check preview shows 4 names
+      expect(screen.getByText(/preview \(4 players\)/i)).toBeInTheDocument();
     });
 
     it('removes leading numbers from bulk entry names', async () => {
